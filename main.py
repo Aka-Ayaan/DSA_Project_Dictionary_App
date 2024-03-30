@@ -1,1 +1,3 @@
-lalalallalla
+def lol(argument):
+    print("hello")
+
