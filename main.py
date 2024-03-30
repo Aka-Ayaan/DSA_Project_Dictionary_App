@@ -1,2 +1,2 @@
 def lol(argument):
-  pass
+    print("hello")
