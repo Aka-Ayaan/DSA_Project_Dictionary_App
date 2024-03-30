@@ -1,4 +1,4 @@
 def lol(argument):
-    print("hello")
+    print("yess")
 
     print("lalala")
