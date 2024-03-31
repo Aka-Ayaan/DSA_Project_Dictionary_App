@@ -24,29 +24,6 @@ def dictionary(filename):
 
 dictionary = dictionary('english.csv')
 
-# def wordDict(dictionary):
-#     returnDict = dict()
-#     upperletterHolder = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'," ","-"]
-#     for i in upperletterHolder:
-#         returnDict[i] = list()
-#     lst = list()
-#     for i in dictionary:
-#         lst.append(i)
-#     for i in range(len(lst)):
-#         for j in range(1,len(lst[i])):
-#             if lst[i][j] not in returnDict[lst[i][j-1]]:
-#                 tempDict = dict()
-#                 flag = False
-#                 for z in dictionary:
-#                     if z[:j+1] == lst[i][:j+1]:
-#                         tempDict[z] = dictionary[z]
-#                         flag = True
-#                 returnDict[lst[i][j-1]].append((lst[i][j],flag,tempDict))
-#                 # print(returnDict)
-#     print(returnDict)
-
-# wordDict(dictionary)
-
 def make_trie(dictionary):
     words = []
     for i in dictionary:
