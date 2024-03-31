@@ -16,6 +16,7 @@ def dictionary(filename):
     return dict
 
 dictionary = dictionary('english.csv')
+print(dictionary)
 
 def wordDict(dictionary):
     returnDict = dict()
