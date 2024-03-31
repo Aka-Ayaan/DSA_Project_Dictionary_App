@@ -24,20 +24,63 @@ def dictionary(filename):
 
 dictionary = dictionary('english.csv')
 
-def wordDict(dictionary):
-    returnDict = dict()
-    upperletterHolder = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'," ","-"]
-    for i in upperletterHolder:
-        returnDict[i] = list()
-    lst = list()
-    for i in dictionary:
-        lst.append(i)
-    # print(lst)
-    for i in range(len(lst)):
-        print(lst[i])
-        for j in range(1,len(lst[i])):
-            if lst[i][j] not in returnDict[lst[i][j-1]]:
-                returnDict[lst[i][j-1]].append(lst[i][j])
-    return returnDict
+# def wordDict(dictionary):
+#     returnDict = dict()
+#     upperletterHolder = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'," ","-"]
+#     for i in upperletterHolder:
+#         returnDict[i] = list()
+#     lst = list()
+#     for i in dictionary:
+#         lst.append(i)
+#     for i in range(len(lst)):
+#         for j in range(1,len(lst[i])):
+#             if lst[i][j] not in returnDict[lst[i][j-1]]:
+#                 tempDict = dict()
+#                 flag = False
+#                 for z in dictionary:
+#                     if z[:j+1] == lst[i][:j+1]:
+#                         tempDict[z] = dictionary[z]
+#                         flag = True
+#                 returnDict[lst[i][j-1]].append((lst[i][j],flag,tempDict))
+#                 # print(returnDict)
+#     print(returnDict)
 
-print(wordDict(dictionary))
+# wordDict(dictionary)
+
+def make_trie(dictionary):
+    words = []
+    for i in dictionary:
+        words.append(i)
+    root = {}
+    for word in words:
+        current_dict = root
+        for letter in word:
+            if letter not in current_dict:
+                current_dict[letter] = {}
+
+            current_dict = current_dict[letter]
+        current_dict["_end"] = dictionary[word]
+    return root
+
+trie = make_trie(dictionary)
+
+def in_trie(trie, word):
+    temp = word.upper()
+    current_dict = trie
+    for letter in temp:
+        if letter not in current_dict:
+            return "No such word in dictionary. Want to insert a new word?"
+        current_dict = current_dict[letter]
+    if "_end" in current_dict:
+        if current_dict["_end"][0][0] == ",":
+            str1 = word + ": " + current_dict["_end"][0][1:]
+        else:
+            str1 = word + ": " + current_dict["_end"][0]
+        return str1
+    else:
+        return "No such word in dictionary. Want to insert a new word?"
+    
+print(in_trie(trie,"Aaronical"))
+
+
+
