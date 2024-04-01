@@ -52,8 +52,7 @@ def in_trie(trie, word):
             if takeChoice.upper() == "YES":
                 meaning = input("Enter your meaning: ")
                 trie = insert_trie(trie,word,meaning)
-                str1 = word + ": " + current_dict["_end"][0]
-                return str1
+                in_trie(trie,word)
             else:
                 print("Exiting...")
         current_dict = current_dict[letter]
@@ -78,7 +77,14 @@ def in_trie(trie, word):
                 print("Invalid Input: Enter \"yes\" or \"no\" to continue.")
 
     else:
-        return "No such word in dictionary. Want to insert a new word?"
+        takeChoice = input("No such word in dictionary. Want to insert a new word?")
+        if takeChoice.upper() == "YES":
+            meaning = input("Enter your meaning: ")
+            trie = insert_trie(trie,word,meaning)
+            str1 = in_trie(trie,word)
+            return str1
+        else:
+            print("Exiting...")
     
 
 
@@ -109,11 +115,12 @@ def insert_trie(trie,word,meaning):
             return trie
     else:
         current_dict = trie
-        for letter in word:
+        for letter in temp:
             if letter not in current_dict:
                 current_dict[letter] = {}
             current_dict = current_dict[letter]
         current_dict["_end"] = meaning
+        print("yes")
         print("Word entered succesfully")
         return trie
 
