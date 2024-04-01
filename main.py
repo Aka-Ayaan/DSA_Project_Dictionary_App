@@ -15,12 +15,6 @@ def dictionary(filename):
             dict[word].append(','.join(data[i]))
         else:
             dict[word] = [','.join(data[i])]
-    lst = list()
-    for i in dict:
-        if "-" == i[0] or "'" in i or "/" in i or "." in i or "1" in i or "(" in i or ")" in i:
-            lst.append(i)
-    for i in range(len(lst)):
-        del dict[lst[i]]
     return dict
 
 
