@@ -1,3 +1,4 @@
+#CSV to dictionary word and meaning
 def dictionary(filename):
     with open(filename) as f:
         data = f.readlines()
@@ -22,8 +23,8 @@ def dictionary(filename):
         del dict[lst[i]]
     return dict
 
-dictionary = dictionary('english.csv')
 
+#Conversion from dictionary to trie
 def make_trie(dictionary):
     words = []
     for i in dictionary:
@@ -39,25 +40,91 @@ def make_trie(dictionary):
         current_dict["_end"] = dictionary[word]
     return root
 
-trie = make_trie(dictionary)
 
+
+#get function
 def in_trie(trie, word):
     temp = word.upper()
     current_dict = trie
     for letter in temp:
         if letter not in current_dict:
-            return "No such word in dictionary. Want to insert a new word?"
+            takeChoice = input("No such word in dictionary. Want to insert a new word?")
+            if takeChoice.upper() == "YES":
+                meaning = input("Enter your meaning: ")
+                trie = insert_trie(trie,word,meaning)
+                str1 = word + ": " + current_dict["_end"][0]
+                return str1
+            else:
+                print("Exiting...")
         current_dict = current_dict[letter]
     if "_end" in current_dict:
         if current_dict["_end"][0][0] == ",":
             str1 = word + ": " + current_dict["_end"][0][1:]
         else:
-            str1 = word + ": " + current_dict["_end"][0]
-        return str1
+            str1 = word + ": " + str(current_dict["_end"])
+        print(str1)
+        flag = False
+        while not flag:
+            choice = input("Is this the meaning you are lookin for?")
+            if choice.upper() == "YES":
+                return str1
+            elif choice.upper() == "NO":
+                print("Add your own meaning to this word:")
+                meaning = input("Enter your meaning: ")
+                trie = insert_trie(trie,word,meaning)
+                str1 = word + ": " + str(current_dict["_end"])
+                return str1
+            else:
+                print("Invalid Input: Enter \"yes\" or \"no\" to continue.")
+
     else:
         return "No such word in dictionary. Want to insert a new word?"
     
-print(in_trie(trie,"Aaronical"))
 
 
 
+
+
+#Insert function
+def insert_trie(trie,word,meaning):
+    temp = word.upper()
+    current_dict = trie
+    flag = True
+    for letter in temp:
+        if letter not in current_dict:
+            flag = False
+            break
+        current_dict = current_dict[letter]
+    if flag:
+        if "_end" in current_dict:
+            if meaning in "_end":
+                print("Word already exists")
+            else:
+                current_dict["_end"].append(meaning)
+                print("Word entered succesfully")
+                return trie
+        else:
+            current_dict["_end"] = [meaning]
+            print("Word entered succesfully")
+            return trie
+    else:
+        current_dict = trie
+        for letter in word:
+            if letter not in current_dict:
+                current_dict[letter] = {}
+            current_dict = current_dict[letter]
+        current_dict["_end"] = meaning
+        print("Word entered succesfully")
+        return trie
+
+dictionary = dictionary('english.csv')
+trie = make_trie(dictionary)
+userInput = int(input("Select your operation by entering the number:\n1)Insert\n2)Get\n"))
+if userInput == 1:
+    word = input("Enter your word")
+    meaning = input("Enter your meaning: ")
+    trie = insert_trie(trie,word,meaning)
+    print(in_trie(trie,word))
+elif userInput == 2:
+    word = input("Enter your word")
+    print(in_trie(trie,word))
