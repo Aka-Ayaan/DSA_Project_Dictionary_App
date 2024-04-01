@@ -122,19 +122,19 @@ def insert_trie(trie,word,meaning):
             if letter not in current_dict:
                 current_dict[letter] = {}
             current_dict = current_dict[letter]
-        current_dict["_end"] = meaning
-        print("yes")
+        current_dict["_end"] = [meaning]
         print("Word entered succesfully")
         return trie
 
 dictionary = dictionary('english.csv')
 trie = make_trie(dictionary)
-userInput = int(input("Select your operation by entering the number:\n1)Insert\n2)Get\n"))
-if userInput == 1:
-    word = input("Enter your word")
-    meaning = input("Enter your meaning: ")
-    trie = insert_trie(trie,word,meaning)
-    print(in_trie(trie,word))
-elif userInput == 2:
-    word = input("Enter your word")
-    print(in_trie(trie,word))
+while True:
+    userInput = int(input("Select your operation by entering the number:\n1)Insert\n2)Get\n"))
+    if userInput == 1:
+        word = input("Enter your word: ")
+        meaning = input("Enter your meaning: ")
+        trie = insert_trie(trie,word,meaning)
+        print(in_trie(trie,word, True))
+    elif userInput == 2:
+        word = input("Enter your word: ")
+        print(in_trie(trie,word))
