@@ -54,7 +54,7 @@ def in_trie(trie, word, returnAfterInsert = False):
                 trie = insert_trie(trie,word,meaning)
                 return in_trie(trie,word,True)
             else:
-                print("Exiting...")
+                return "Exiting..."
         current_dict = current_dict[letter]
     if "_end" in current_dict:
         if current_dict["_end"][0][0] == ",":
@@ -67,9 +67,9 @@ def in_trie(trie, word, returnAfterInsert = False):
             print(str1)
             flag = False
             while not flag:
-                choice = input("Is this the meaning you are lookin for?")
+                choice = input("Is this the meaning you are lookin for?: ")
                 if choice.upper() == "YES":
-                    return str1
+                    return "Great! Exiting program.."
                 elif choice.upper() == "NO":
                     print("Add your own meaning to this word:")
                     meaning = input("Enter your meaning: ")
@@ -87,12 +87,7 @@ def in_trie(trie, word, returnAfterInsert = False):
             str1 = in_trie(trie,word,True)
             return str1
         else:
-            print("Exiting...")
-    
-
-
-
-
+            return "Exiting..."
 
 #Insert function
 def insert_trie(trie,word,meaning):
@@ -106,12 +101,10 @@ def insert_trie(trie,word,meaning):
         current_dict = current_dict[letter]
     if flag:
         if "_end" in current_dict:
-            if meaning in "_end":
-                print("Word already exists")
-            else:
-                current_dict["_end"].append(meaning)
-                print("Word entered succesfully")
-                return trie
+            print("Word already exists")
+            current_dict["_end"].append(meaning)
+            print("Meaning added succesfully")
+            return trie
         else:
             current_dict["_end"] = [meaning]
             print("Word entered succesfully")
@@ -125,23 +118,116 @@ def insert_trie(trie,word,meaning):
         current_dict["_end"] = [meaning]
         print("Word entered succesfully")
         return trie
+    
+def delete_trie_word(trie,word):
+    temp = word.upper()
+    current_dict = trie
+    for letter in temp:
+        if letter not in current_dict:
+            takeChoice = input("No such word in dictionary. Want to insert a new word?")
+            if takeChoice.upper() == "YES":
+                meaning = input("Enter your meaning: ")
+                trie = insert_trie(trie,word,meaning)
+                return in_trie(trie,word,True)
+            else:
+                return "Exiting..."
+        current_dict = current_dict[letter]
+    if "_end" not in current_dict:
+        takeChoice = input("No such word in dictionary. Want to insert a new word?")
+        if takeChoice.upper() == "YES":
+            meaning = input("Enter your meaning: ")
+            trie = insert_trie(trie,word,meaning)
+            str1 = in_trie(trie,word,True)
+            return str1
+        else:
+            return "Exiting..."
+    else:
+        del current_dict["_end"]
+        return "Word removed succesfully"
+
+def delete_trie_word_meaning(trie,word,meaning):
+    temp = word.upper()
+    current_dict = trie
+    for letter in temp:
+        if letter not in current_dict:
+            takeChoice = input("No such word in dictionary. Want to insert a new word?")
+            if takeChoice.upper() == "YES":
+                meaning = input("Enter your meaning: ")
+                trie = insert_trie(trie,word,meaning)
+                return in_trie(trie,word,True)
+            else:
+                return "Exiting..."
+        current_dict = current_dict[letter]
+    if "_end" not in current_dict:
+        takeChoice = input("No such word in dictionary. Want to insert a new word?")
+        if takeChoice.upper() == "YES":
+            meaning = input("Enter your meaning: ")
+            trie = insert_trie(trie,word,meaning)
+            str1 = in_trie(trie,word,True)
+            return str1
+        else:
+            return "Exiting..."
+    else:
+        if len(current_dict["_end"]) == 1:
+            flagInput = False
+            while not flagInput:
+                print(word,"only contains the meaning you have asked to delete. Deleting this meaning would also delete the word as there are no other meanings!. Continue?")
+                userInput = input()
+                if userInput.upper() == "YES":
+                    del current_dict["_end"]
+                    return "Meaning and word successfully deleted."
+                elif userInput.upper() == "NO":
+                    return "Exiting program.."
+                else:
+                    print("Invalid input. Answer with either yes or no")
+        else:
+            for i in range(len(current_dict["_end"])):
+                if current_dict["_end"][i] == meaning:
+                    del current_dict["_end"][i]
+                    print(word + ": " + str(current_dict["_end"]))
+                    return "Meaning successfully deleted."
+            return "No such meaning exists."
+
 
 dictionary = dictionary('english.csv')
 trie = make_trie(dictionary)
 flag = True
 while flag:
-    userInput = int(input("Select your operation by entering the number:\n1)Insert\n2)Get\n"))
-    if userInput == 1:
-        word = input("Enter your word: ")
-        meaning = input("Enter your meaning: ")
-        trie = insert_trie(trie,word,meaning)
-        print(in_trie(trie,word, True))
-    elif userInput == 2:
-        word = input("Enter your word: ")
-        print(in_trie(trie,word))
+    mainFlag = False
+    while not mainFlag:
+        userInput = int(input("Select your operation by entering the number:\n1)Insert\n2)Get\n3)Delete\n"))
+        if userInput == 1:
+            word = input("Enter your word: ")
+            meaning = input("Enter your meaning: ")
+            trie = insert_trie(trie,word,meaning)
+            print(in_trie(trie,word, True))
+            mainFlag = True
+        elif userInput == 2:
+            word = input("Enter your word: ")
+            print(in_trie(trie,word))
+            mainFlag = True
+        elif userInput == 3:
+            select = int(input("Choose your operation:\n1)Delete the word\n2)Delete a meaning of the word\n"))
+            flagCheck = False
+            while not flagCheck:
+                if select == 1:
+                    word = input("Enter your word: ")
+                    print(delete_trie_word(trie,word))
+                    flagCheck = True
+                    mainFlag = True
+                elif select == 2:
+                    word = input("Enter your word: ")
+                    meaning = input("Enter your meaning: ")
+                    print(delete_trie_word_meaning(trie,word,meaning))
+                    flagCheck = True
+                    mainFlag = True
+                else:
+                    print("Invalid input. Answer with 1 or 2")
+        else:
+            print("Invalid input. Enter a number between 1 and 3.")
     flagInput = False
     while not flagInput:
-        choice = input("Exit the program?:")
+        choice = input("Exit the program?: ")
         if choice.upper() == "YES":
             flagInput = True
             flag = False
