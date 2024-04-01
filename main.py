@@ -128,7 +128,8 @@ def insert_trie(trie,word,meaning):
 
 dictionary = dictionary('english.csv')
 trie = make_trie(dictionary)
-while True:
+flag = True
+while flag:
     userInput = int(input("Select your operation by entering the number:\n1)Insert\n2)Get\n"))
     if userInput == 1:
         word = input("Enter your word: ")
@@ -138,3 +139,13 @@ while True:
     elif userInput == 2:
         word = input("Enter your word: ")
         print(in_trie(trie,word))
+    flagInput = False
+    while not flagInput:
+        choice = input("Exit the program?:")
+        if choice.upper() == "YES":
+            flagInput = True
+            flag = False
+        elif choice.upper() == "NO":
+            flagInput = True
+        else:
+            print("Invalid input. Answer with either yes or no")
