@@ -43,7 +43,7 @@ def make_trie(dictionary):
 
 
 #get function
-def in_trie(trie, word):
+def in_trie(trie, word, returnAfterInsert = False):
     temp = word.upper()
     current_dict = trie
     for letter in temp:
@@ -52,7 +52,7 @@ def in_trie(trie, word):
             if takeChoice.upper() == "YES":
                 meaning = input("Enter your meaning: ")
                 trie = insert_trie(trie,word,meaning)
-                in_trie(trie,word)
+                return in_trie(trie,word,True)
             else:
                 print("Exiting...")
         current_dict = current_dict[letter]
@@ -61,27 +61,30 @@ def in_trie(trie, word):
             str1 = word + ": " + current_dict["_end"][0][1:]
         else:
             str1 = word + ": " + str(current_dict["_end"])
-        print(str1)
-        flag = False
-        while not flag:
-            choice = input("Is this the meaning you are lookin for?")
-            if choice.upper() == "YES":
-                return str1
-            elif choice.upper() == "NO":
-                print("Add your own meaning to this word:")
-                meaning = input("Enter your meaning: ")
-                trie = insert_trie(trie,word,meaning)
-                str1 = word + ": " + str(current_dict["_end"])
-                return str1
-            else:
-                print("Invalid Input: Enter \"yes\" or \"no\" to continue.")
+        if returnAfterInsert:
+            return str1
+        else:
+            print(str1)
+            flag = False
+            while not flag:
+                choice = input("Is this the meaning you are lookin for?")
+                if choice.upper() == "YES":
+                    return str1
+                elif choice.upper() == "NO":
+                    print("Add your own meaning to this word:")
+                    meaning = input("Enter your meaning: ")
+                    trie = insert_trie(trie,word,meaning)
+                    str1 = word + ": " + str(current_dict["_end"])
+                    return str1
+                else:
+                    print("Invalid Input: Enter \"yes\" or \"no\" to continue.")
 
     else:
         takeChoice = input("No such word in dictionary. Want to insert a new word?")
         if takeChoice.upper() == "YES":
             meaning = input("Enter your meaning: ")
             trie = insert_trie(trie,word,meaning)
-            str1 = in_trie(trie,word)
+            str1 = in_trie(trie,word,True)
             return str1
         else:
             print("Exiting...")
