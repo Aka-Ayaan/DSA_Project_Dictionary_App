@@ -174,8 +174,11 @@ def delete_trie_word_meaning(trie,word,meaning):
                 print(word,"only contains the meaning you have asked to delete. Deleting this meaning would also delete the word as there are no other meanings!. Continue?")
                 userInput = input()
                 if userInput.upper() == "YES":
-                    del current_dict["_end"]
-                    return "Meaning and word successfully deleted."
+                    if meaning in current_dict["_end"]:
+                        del current_dict["_end"]
+                        return "Meaning and word successfully deleted."
+                    else:
+                        return "No such meaning exists."
                 elif userInput.upper() == "NO":
                     return "Exiting program.."
                 else:
