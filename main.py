@@ -1,5 +1,6 @@
 import csv
 import ctypes as ct
+#Sort alphabetically to insert
 #CSV to dictionary word and meaning
 def dictionaryCreate(filename):
     countX = 127338
@@ -37,8 +38,6 @@ def make_trie(dictionary):
             current_dict = current_dict[letter]
         current_dict["_end"] = dictionary[word]
     return root
-
-
 
 #get function
 def in_trie(trie, word, dictionary, returnAfterInsert = False):
@@ -78,7 +77,6 @@ def in_trie(trie, word, dictionary, returnAfterInsert = False):
                     return str1
                 else:
                     print("Invalid Input: Enter \"yes\" or \"no\" to continue.")
-
     else:
         takeChoice = input("No such word in dictionary. Want to insert a new word?")
         if takeChoice.upper() == "YES":
@@ -159,7 +157,7 @@ def delete_word_from_CS(word,trie,dictionary):
     trie = make_trie(dictionary)
     return (trie,dictionary)
 
-def delete_trie_word(trie,word,dicitionary):
+def delete_trie_word(trie,word,dictionary):
     temp = word.upper()
     current_dict = trie
     for letter in temp:
@@ -193,8 +191,6 @@ def reset(dictionary,trie):
             csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
             reader = csv.reader(copyf)
             for i, rows in enumerate(reader):
-                if i == 1 or i == 128450:
-                    print(rows)
                 commacsvwriter.writerow([rows[0],rows[1],rows[2]])
     dictionary = dictionaryCreate("english.csv")
     trie = make_trie(dictionary)
