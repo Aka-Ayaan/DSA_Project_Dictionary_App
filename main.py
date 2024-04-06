@@ -350,7 +350,7 @@ while flag:
                     print("Invalid input. Enter a number between 1 and 3.")
                     continue
             flagInput = False
-            while not flagInput:
+            while not flagInput and userInput != 4:
                 choice = input("Back to interface selection: ")
                 if choice.upper() == "YES":
                     flagInput = True
