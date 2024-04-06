@@ -193,6 +193,8 @@ def reset(dictionary,trie):
             csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
             reader = csv.reader(copyf)
             for i, rows in enumerate(reader):
+                if i == 1 or i == 128450:
+                    print(rows)
                 commacsvwriter.writerow([rows[0],rows[1],rows[2]])
     dictionary = dictionaryCreate("english.csv")
     trie = make_trie(dictionary)
@@ -203,8 +205,8 @@ def delete_meaning_from_CSV(word,verb,meaning,dictionary,trie):
         reader = csv.reader(copyf)
         commacsvwriter = csv.writer(f)
         csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
+        meaning = meaning.strip('"')
         for i, rows in enumerate(reader):
-            print(rows)
             if word == rows[0] and verb == rows[1] and meaning == rows[2]:
                 continue
             else:
@@ -265,7 +267,7 @@ def delete_trie_word_meaning(trie,word,meaning,verb,dictionary):
                     del current_dict["_end"][i]
                     temp = delete_meaning_from_CSV(word,verb,meaning,dictionary,trie)
                     trie, dictionary = temp[0], temp[1]
-                    print(word + ": " + str(current_dict["_end"]))
+                    # print(word + ": " + str(current_dict["_end"]))
                     return "Meaning successfully deleted."
             return "No such meaning exists."
 
@@ -296,12 +298,16 @@ while flag:
                             print("Invalid input. Enter 1 to continue")
                 else:
                     print("Wrong password")
-                    choice = int(input("Select 1 or 2:\n1)Try again\n2)Main meanu\n")) 
+                    choice = int(input("Select 1 or 2:\n1)Try again\n2)Main meanu\n3)Exit program\n")) 
                     if choice == 2:
                         passFlag = True
-                        initalInput = 2
+                    elif choice == 3:
+                        print("Exiting...")
+                        passFlag = True
+                        logInFlag = True
+                        flag = False
             flagInput = False
-            while not flagInput and initalInput == 1:
+            while not flagInput and initalInput != 1:
                 choice = input("Exit the program?: ")
                 if choice.upper() == "YES":
                     logInFlag = True
@@ -314,7 +320,7 @@ while flag:
         elif initalInput == 2:   
             mainFlag = False
             while not mainFlag:
-                userInput = int(input("Select your operation by entering the number:\n1)Insert\n2)Get\n3)Delete\n4)Exit\n"))
+                userInput = int(input("Select your operation by entering the number:\n1)Insert\n2)Get\n3)Delete\n4)Main Menu\n5)Exit\n"))
                 if userInput == 1:
                     word = input("Enter your word: ")
                     verb = input("What part of speech is it? (Verb,Noun,adjective,preposition,etc). Can skip if don't know: ")
@@ -346,20 +352,13 @@ while flag:
                             print("Invalid input. Answer with 1 or 2")
                 elif userInput == 4:
                     mainFlag = True
-                else:
-                    print("Invalid input. Enter a number between 1 and 3.")
-                    continue
-            flagInput = False
-            while not flagInput and userInput != 4:
-                choice = input("Back to interface selection: ")
-                if choice.upper() == "YES":
-                    flagInput = True
-                if choice.upper() == "NO":
-                    print("Exiting program")
-                    flagInput = True
+                elif userInput == 5:
+                    print("Exiting..")
+                    mainFlag = True
                     logInFlag = True
                     flag = False
                 else:
-                    print("Invalid input. Answer with either yes or no")
+                    print("Invalid input. Enter a number between 1 and 3.")
+                    continue
         else:
             print("Invalid input. Enter 1 or 2 to continue")
