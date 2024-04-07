@@ -63,8 +63,7 @@ def in_trie(trie, word, dictionary, returnAfterInsert = False):
             return str1
         else:
             print(str1)
-            flag = False
-            while not flag:
+            while True:
                 choice = input("Is this the meaning you are lookin for?: ")
                 if choice.upper() == "YES":
                     return "Great! Exiting program.."
@@ -91,8 +90,8 @@ def in_trie(trie, word, dictionary, returnAfterInsert = False):
 #Adds the words user has entered into the csv file in order to save them permenatnely (even for the next time the program runs)
 def writeToCSV(word,verb,meaning,trie,dictionary):
     with open("english.csv","a",newline='') as csvfile:
-        csvwriter = csv.writer(csvfile)
-        csvwriter.writerow([word,verb,meaning])
+        writer = csv.writer(csvfile)
+        writer.writerow([word,verb,meaning])
     dictionary = dictionaryCreate("english.csv")
     trie = make_trie(dictionary)
     return (trie,dictionary)
@@ -140,19 +139,19 @@ def insert_trie(trie,word,meaning,verb,dictionary):
 def delete_word_from_CS(word,trie,dictionary):
     with open("english.csv","r") as copyf, open("transfer.csv","w",newline='') as f:
         reader = csv.reader(copyf)
-        commacsvwriter = csv.writer(f)
+        writer = csv.writer(f)
         csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
         for i, rows in enumerate(reader):
             if word == rows[0]:
                 continue
             else:
-                commacsvwriter.writerow([rows[0],rows[1],rows[2]])
+                writer.writerow([rows[0],rows[1],rows[2]])
     with open("transfer.csv","r") as copyf, open("english.csv","w",newline='') as f:
         reader = csv.reader(copyf)
-        commacsvwriter = csv.writer(f)
+        writer = csv.writer(f)
         csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
         for i, rows in enumerate(reader):
-            commacsvwriter.writerow([rows[0],rows[1],rows[2]])
+            writer.writerow([rows[0],rows[1],rows[2]])
     dictionary = dictionaryCreate("english.csv")
     trie = make_trie(dictionary)
     return (trie,dictionary)
@@ -186,12 +185,12 @@ def delete_trie_word(trie,word,dictionary):
 
 def reset(dictionary,trie):
     with open("english.csv","w",newline='') as f:
-        commacsvwriter = csv.writer(f)
+        writer = csv.writer(f)
         with open("original.csv","r") as copyf:
             csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
             reader = csv.reader(copyf)
             for i, rows in enumerate(reader):
-                commacsvwriter.writerow([rows[0],rows[1],rows[2]])
+                writer.writerow([rows[0],rows[1],rows[2]])
     dictionary = dictionaryCreate("english.csv")
     trie = make_trie(dictionary)
     return (trie,dictionary)
@@ -199,20 +198,20 @@ def reset(dictionary,trie):
 def delete_meaning_from_CSV(word,verb,meaning,dictionary,trie):
     with open("english.csv","r") as copyf, open("transfer.csv","w",newline='') as f:
         reader = csv.reader(copyf)
-        commacsvwriter = csv.writer(f)
+        writer = csv.writer(f)
         csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
         meaning = meaning.strip('"')
         for i, rows in enumerate(reader):
             if word == rows[0] and verb == rows[1] and meaning == rows[2]:
                 continue
             else:
-                commacsvwriter.writerow([rows[0],rows[1],rows[2]])
+                writer.writerow([rows[0],rows[1],rows[2]])
     with open("transfer.csv","r") as copyf, open("english.csv","w",newline='') as f:
         reader = csv.reader(copyf)
-        commacsvwriter = csv.writer(f)
+        writer = csv.writer(f)
         csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
         for i, rows in enumerate(reader):
-            commacsvwriter.writerow([rows[0],rows[1],rows[2]])
+            writer.writerow([rows[0],rows[1],rows[2]])
     trie = make_trie(dictionary)
     return (trie,dictionary)
 
@@ -240,22 +239,21 @@ def delete_trie_word_meaning(trie,word,meaning,verb,dictionary):
             return "Exiting..."
     else:
         if len(current_dict["_end"]) == 1:
-            flagInput = False
-            while not flagInput:
-                print(word,"only contains the one meaning. Deleting this meaning would also delete the word as there are no other meanings!. Continue?")
-                userInput = input()
-                if userInput.upper() == "YES":
-                    if verb + "," + meaning == current_dict["_end"][0]:
+            if verb + "," + meaning == current_dict["_end"][0]:
+                while True:
+                    print(word,"only contains the one meaning. Deleting this meaning would also delete the word as there are no other meanings!. Continue?")
+                    userInput = input()
+                    if userInput.upper() == "YES":
                         del current_dict["_end"]
                         temp = delete_meaning_from_CSV(word,verb,meaning,dictionary,trie)
                         trie, dictionary = temp[0], temp[1]
                         return "Meaning and word successfully deleted."
+                    elif userInput.upper() == "NO":
+                        return "Exiting program.."
                     else:
-                        return "No such meaning exists."
-                elif userInput.upper() == "NO":
-                    return "Exiting program.."
-                else:
-                    print("Invalid input. Answer with either yes or no")
+                        print("Invalid input. Answer with either yes or no")
+            else:
+                return "No such meaning exists."
         else:
             for i in range(len(current_dict["_end"])):
                 check = verb + "," + meaning
