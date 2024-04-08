@@ -45,14 +45,17 @@ def in_trie(trie, word, dictionary, returnAfterInsert = False):
     current_dict = trie
     for letter in temp:
         if letter not in current_dict:
-            takeChoice = input("No such word in dictionary. Want to insert a new word?")
-            if takeChoice.upper() == "YES":
-                verb = input("What part of speech is it? (Verb,Noun,adjective,preposition,etc) Can skip if don't know: ")
-                meaning = input("Enter your meaning: ")
-                trie = insert_trie(trie,word,meaning,verb,dictionary)
-                return in_trie(trie,word,dictionary,True)
-            else:
-                return "Exiting..."
+            while True:
+                takeChoice = input("No such word in dictionary. Want to insert a new word?")
+                if takeChoice.upper() == "YES":
+                    verb = input("What part of speech is it? (Verb,Noun,adjective,preposition,etc) Can skip if don't know: ")
+                    meaning = input("Enter your meaning: ")
+                    trie = insert_trie(trie,word,meaning,verb,dictionary)
+                    return in_trie(trie,word,dictionary,True)
+                elif takeChoice.upper() == "NO":
+                    return "Exiting"
+                else:
+                    print("Enter either yes or no to conitnue")
         current_dict = current_dict[letter]
     if "_end" in current_dict:
         for i in range(len(current_dict["_end"])):
@@ -268,91 +271,86 @@ def delete_trie_word_meaning(trie,word,meaning,verb,dictionary):
 
 dictionary = dictionaryCreate('english.csv')
 trie = make_trie(dictionary)
-flag = True
-while flag:
-    logInFlag = False
-    while not logInFlag:
-        initalInput = int(input("Select interface:\n1)Admin\n2)User\n"))
-        if initalInput == 1:
-            passFlag = False
-            while not passFlag:
-                userInput = input("Enter password: ")
-                passStore = "hehe"
-                if userInput == passStore:
-                    passFlag = True
-                    operationFlag = False
-                    while not operationFlag:
-                        userSelect = int(input("Select operation:\n1)Reset dictionary\n"))
-                        if userSelect == 1:
-                            temp = reset(dictionary,trie)
-                            trie, dictionary = temp[0], temp[1]
-                            operationFlag = True
-                            print("Dictionary resetted!")
-                        else:
-                            print("Invalid input. Enter 1 to continue")
-                else:
-                    print("Wrong password")
-                    choice = int(input("Select 1 or 2:\n1)Try again\n2)Main meanu\n3)Exit program\n")) 
-                    if choice == 2:
-                        passFlag = True
-                    elif choice == 3:
-                        print("Exiting...")
-                        passFlag = True
-                        logInFlag = True
-                        flag = False
-            flagInput = False
-            while not flagInput and initalInput != 1:
-                choice = input("Exit the program?: ")
-                if choice.upper() == "YES":
-                    logInFlag = True
-                    flagInput = True
-                    flag = False
-                elif choice.upper() == "NO":
-                    flagInput = True
-                else:
-                    print("Invalid input. Answer with either yes or no")
-        elif initalInput == 2:   
-            mainFlag = False
-            while not mainFlag:
-                userInput = int(input("Select your operation by entering the number:\n1)Insert\n2)Get\n3)Delete\n4)Main Menu\n5)Exit\n"))
-                if userInput == 1:
-                    word = input("Enter your word: ")
-                    verb = input("What part of speech is it? (Verb,Noun,adjective,preposition,etc). Can skip if don't know: ")
-                    meaning = input("Enter your meaning: ")
-                    temp = insert_trie(trie,word,meaning,verb,dictionary)
-                    if type(temp) != str:
-                        trie = temp
-                        print(in_trie(trie,word,dictionary,True))
+logInFlag = False
+while not logInFlag:
+    initalInput = int(input("Select interface:\n1)Admin\n2)User\n"))
+    if initalInput == 1:
+        passFlag = False
+        while not passFlag:
+            userInput = input("Enter password: ")
+            passStore = "hehe"
+            if userInput == passStore:
+                passFlag = True
+                operationFlag = False
+                while not operationFlag:
+                    userSelect = int(input("Select operation:\n1)Reset dictionary\n"))
+                    if userSelect == 1:
+                        temp = reset(dictionary,trie)
+                        trie, dictionary = temp[0], temp[1]
+                        operationFlag = True
+                        print("Dictionary resetted!")
                     else:
-                        print(temp)
-                elif userInput == 2:
-                    word = input("Enter your word: ")
-                    print(in_trie(trie,word,dictionary))
-                elif userInput == 3:
-                    select = int(input("Choose your operation:\n1)Delete the word\n2)Delete a meaning of the word\n"))
-                    flagCheck = False
-                    while not flagCheck:
-                        if select == 1:
-                            word = input("Enter your word: ")
-                            print(delete_trie_word(trie,word,dictionary))
-                            flagCheck = True
-                        elif select == 2:
-                            word = input("Enter your word: ")
-                            verb = input("What part of speech is it? (Verb,Noun,adjective,preposition,etc). Can skip if don't know: ")
-                            meaning = input("Enter your meaning: ")
-                            print(delete_trie_word_meaning(trie,word,meaning,verb,dictionary))
-                            flagCheck = True
-                        else:
-                            print("Invalid input. Answer with 1 or 2")
-                elif userInput == 4:
-                    mainFlag = True
-                elif userInput == 5:
-                    print("Exiting..")
-                    mainFlag = True
+                        print("Invalid input. Enter 1 to continue")
+            else:
+                print("Wrong password")
+                choice = int(input("Select 1 or 2:\n1)Try again\n2)Main meanu\n3)Exit program\n")) 
+                if choice == 2:
+                    passFlag = True
+                elif choice == 3:
+                    print("Exiting...")
+                    passFlag = True
                     logInFlag = True
-                    flag = False
+        flagInput = False
+        while not flagInput and initalInput != 1:
+            choice = input("Exit the program?: ")
+            if choice.upper() == "YES":
+                logInFlag = True
+                flagInput = True
+            elif choice.upper() == "NO":
+                flagInput = True
+            else:
+                print("Invalid input. Answer with either yes or no")
+    elif initalInput == 2:   
+        mainFlag = False
+        while not mainFlag:
+            userInput = int(input("Select your operation by entering the number:\n1)Insert\n2)Get\n3)Delete\n4)Main Menu\n5)Exit\n"))
+            if userInput == 1:
+                word = input("Enter your word: ")
+                verb = input("What part of speech is it? (Verb,Noun,adjective,preposition,etc). Can skip if don't know: ")
+                meaning = input("Enter your meaning: ")
+                temp = insert_trie(trie,word,meaning,verb,dictionary)
+                if type(temp) != str:
+                    trie = temp
+                    print(in_trie(trie,word,dictionary,True))
                 else:
-                    print("Invalid input. Enter a number between 1 and 3.")
-                    continue
-        else:
-            print("Invalid input. Enter 1 or 2 to continue")
+                    print(temp)
+            elif userInput == 2:
+                word = input("Enter your word: ")
+                print(in_trie(trie,word,dictionary))
+            elif userInput == 3:
+                select = int(input("Choose your operation:\n1)Delete the word\n2)Delete a meaning of the word\n"))
+                flagCheck = False
+                while not flagCheck:
+                    if select == 1:
+                        word = input("Enter your word: ")
+                        print(delete_trie_word(trie,word,dictionary))
+                        flagCheck = True
+                    elif select == 2:
+                        word = input("Enter your word: ")
+                        verb = input("What part of speech is it? (Verb,Noun,adjective,preposition,etc). Can skip if don't know: ")
+                        meaning = input("Enter your meaning: ")
+                        print(delete_trie_word_meaning(trie,word,meaning,verb,dictionary))
+                        flagCheck = True
+                    else:
+                        print("Invalid input. Answer with 1 or 2")
+            elif userInput == 4:
+                mainFlag = True
+            elif userInput == 5:
+                print("Exiting..")
+                mainFlag = True
+                logInFlag = True
+            else:
+                print("Invalid input. Enter a number between 1 and 3.")
+                continue
+    else:
+        print("Invalid input. Enter 1 or 2 to continue")
