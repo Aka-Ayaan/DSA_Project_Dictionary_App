@@ -423,6 +423,7 @@ while not logInFlag:
                 logInFlag = True
             else:
                 print("Invalid input. Enter a number between 1 and 3.")
+                #print("yes")
                 continue
     else:
         print("Invalid input. Enter 1 or 2 to continue")
