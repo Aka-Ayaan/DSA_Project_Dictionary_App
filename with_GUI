@@ -2,8 +2,10 @@ import sys
 import csv
 import os
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QLineEdit, QTextEdit, QMessageBox
+import ctypes as ct
 
 class DictionaryApp(QWidget):
+    
     def __init__(self):
         super().__init__()
         self.dictionary = self.dictionaryCreate('english.csv')
@@ -166,12 +168,14 @@ class DictionaryApp(QWidget):
 
     def resetDictionary(self):
         try:
-            with open("original.csv", "r", newline='', encoding='utf-8') as copyf, open("english.csv", "w", newline='', encoding='utf-8') as f:
-                reader = csv.reader(copyf)
+            with open("english.csv","w",newline='') as f:
                 writer = csv.writer(f)
-                for row in reader:
-                    writer.writerow(row)
-            self.dictionary = self.dictionaryCreate('english.csv')
+                with open("original.csv","r") as copyf:
+                    csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
+                    reader = csv.reader(copyf)
+                    for i, rows in enumerate(reader):
+                        writer.writerow([rows[0],rows[1],rows[2]])
+            self.dictionary = self.dictionaryCreate("english.csv")
             self.trie = self.make_trie(self.dictionary)
             QMessageBox.information(self, 'Success', 'Dictionary reset successfully.')
         except FileNotFoundError:
