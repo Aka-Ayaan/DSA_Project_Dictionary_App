@@ -30,6 +30,7 @@ class DictionaryApp(QWidget):
         reset_button.clicked.connect(self.resetDictionary)
 
         main_layout = QVBoxLayout(main_screen)
+        main_layout.addWidget(reset_button)
         main_layout.addWidget(insert_button)
         main_layout.addWidget(get_button)
         main_layout.addWidget(delete_button)
@@ -142,20 +143,20 @@ class DictionaryApp(QWidget):
         return trie
 
     def insertWord(self, word_entry, verb_entry, meaning_entry, output_display):
-        word = word_entry.text().strip().upper()
+        word = word_entry.text().strip()
         verb = verb_entry.text().strip()
         meaning = meaning_entry.toPlainText().strip()
         
         if word == '' or meaning == '':
             output_display.setText('Word and meaning cannot be empty.')
-            return
-        
-        result = self.insert_trie(self.trie, word, meaning, verb, self.dictionary)
-        output_display.setText(result)
+        else:
+            result = self.insert_trie(self.trie, word, meaning, verb, self.dictionary)
+            output_display.setText(result)
 
     def insert_trie(self, trie, word, meaning, verb, dictionary):
+        temp = word.upper()
         current_dict = trie
-        for letter in word:
+        for letter in temp:
             if letter not in current_dict:
                 current_dict[letter] = {}
             current_dict = current_dict[letter]
