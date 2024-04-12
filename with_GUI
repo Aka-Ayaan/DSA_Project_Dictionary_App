@@ -9,6 +9,7 @@ class DictionaryApp(QWidget):
         super().__init__()
         self.dictionary = self.dictionaryCreate('english.csv')
         self.trie = self.make_trie(self.dictionary)
+        self.currentWord = ''
         self.initUI()
 
     def initUI(self):
@@ -23,16 +24,19 @@ class DictionaryApp(QWidget):
         get_button = QPushButton('Get Word', main_screen)
         delete_button = QPushButton('Delete Word', main_screen)
         reset_button = QPushButton('Reset Dictionary', main_screen)
+        get_letter_button = QPushButton('Get Word Letter-by-letter',main_screen)
         
         insert_button.clicked.connect(self.showInsertScreen)
         get_button.clicked.connect(self.showGetScreen)
         delete_button.clicked.connect(self.showDeleteScreen)
         reset_button.clicked.connect(self.resetDictionary)
+        get_letter_button.clicked.connect(self.getLetterScreen)
 
         main_layout = QVBoxLayout(main_screen)
         main_layout.addWidget(reset_button)
         main_layout.addWidget(insert_button)
         main_layout.addWidget(get_button)
+        main_layout.addWidget(get_letter_button)
         main_layout.addWidget(delete_button)
 
         self.stackedWidget.addWidget(main_screen)
@@ -61,6 +65,7 @@ class DictionaryApp(QWidget):
         insert_layout.addWidget(meaning_entry)
         insert_layout.addWidget(insert_button)
         insert_layout.addWidget(back_button)
+        insert_layout.addWidget(QLabel('Output Screen:'))
         insert_layout.addWidget(output_display)
 
         self.stackedWidget.addWidget(insert_screen)
@@ -106,6 +111,28 @@ class DictionaryApp(QWidget):
         self.stackedWidget.addWidget(delete_screen)
         self.stackedWidget.setCurrentWidget(delete_screen)
 
+    def getLetterScreen(self):
+        getLetter_screen = QWidget()
+        letter_entry = QLineEdit(getLetter_screen)
+        getLetter_button = QPushButton('Get words with letter',getLetter_screen)
+        # getFinalWord_button = QPushButton('Get meaning of the word',getLetter_screen)
+        back_button = QPushButton('Back', getLetter_screen)
+        output_display = QTextEdit(getLetter_screen)
+        getLetter_button.clicked.connect(lambda: self.getLetterWord(letter_entry,output_display))
+        # getFinalWord_button.clicked.connect(lambda: self.in_trie(self.trie,))
+        back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
+
+        get_letter_layout = QVBoxLayout(getLetter_screen)
+        get_letter_layout.addWidget(QLabel('Letter:'))
+        get_letter_layout.addWidget(letter_entry)
+        get_letter_layout.addWidget(getLetter_button)
+        # get_letter_layout.addWidget(getFinalWord_button)
+        get_letter_layout.addWidget(back_button)
+        get_letter_layout.addWidget(output_display)
+
+        self.stackedWidget.addWidget(getLetter_screen)
+        self.stackedWidget.setCurrentWidget(getLetter_screen)
+        
     def dictionaryCreate(self, filename):
         dictionary = {}
         try:
@@ -193,10 +220,35 @@ class DictionaryApp(QWidget):
                 return "No such word in dictionary."
             current_dict = current_dict[letter]
         if "_end" in current_dict:
-            meanings = ', '.join(current_dict["_end"])
-            return f"{word}: {meanings}"
+            meanings = ""
+            for i in range(len(current_dict["_end"])):
+                meanings += str(i+1) + ") " + current_dict["_end"][i] + "\n"
+            meanings = meanings[:-1]
+            return f"{word}:\n{meanings}"
         else:
             return "No meanings found for this word in dictionary."
+        
+    def getLetterWord(self,letter_entry,output_display):
+        letter_entry = letter_entry.text().strip()
+        self.currentWord += letter_entry
+        letter_entry = self.currentWord
+        result = self.in_trie_by_letter(self.trie,letter_entry,self.dictionary)
+        result = ", ".join(result)
+        output_display.setText(result)
+        
+    def in_trie_by_letter(self, trie, currentWord, dictionary):
+        temp = currentWord.upper()
+        current_dict = trie
+        for letter in temp:
+            if letter not in current_dict:
+                return "No such words in dictionary that contain the following letters."
+            current_dict = current_dict[letter]
+        lst = list()
+        for i in current_dict:
+            if i == "_end":
+                continue
+            lst.append(currentWord+i.lower())
+        return lst
 
     def deleteWord(self, word_entry, output_display):
         word = word_entry.text().strip().upper()
@@ -219,6 +271,7 @@ class DictionaryApp(QWidget):
     def delete_word_from_CS(self, word):
         try:
             with open("english.csv", "r", newline='', encoding='utf-8') as copyf, open("transfer.csv", "w", newline='', encoding='utf-8') as f:
+                csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
                 reader = csv.reader(copyf)
                 writer = csv.writer(f)
                 for row in reader:
