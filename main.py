@@ -260,7 +260,7 @@ def delete_trie_word_meaning(trie,word,meaning,verb,dictionary):
             return "Exiting..."
     else:
         if len(current_dict["_end"]) == 1:
-            if verb + "," + meaning in current_dict["_end"][0]:
+            if verb in current_dict["_end"][0] and meaning in current_dict["_end"][0]:
                 while True:
                     print(current_dict["_end"][0])
                     askUser = input("Is this the meaning you are looking to delete?")
@@ -269,6 +269,8 @@ def delete_trie_word_meaning(trie,word,meaning,verb,dictionary):
                             print(word,"only contains the one meaning. Deleting this meaning would also delete the word as there are no other meanings!. Continue?")
                             userInput = input()
                             if userInput.upper() == "YES":
+                                meaning = current_dict["_end"][0]
+                                meaning = meaning[len(verb)+1:]
                                 del current_dict["_end"]
                                 temp = delete_meaning_from_CSV(word,verb,meaning,dictionary,trie)
                                 trie, dictionary = temp[0], temp[1]
@@ -286,8 +288,7 @@ def delete_trie_word_meaning(trie,word,meaning,verb,dictionary):
         else:
             lst = list()
             for i in range(len(current_dict["_end"])):
-                check = verb + "," + meaning
-                if check in current_dict["_end"][i]:
+                if verb in current_dict["_end"][i] and meaning in current_dict["_end"][i]:
                     lst.append(current_dict["_end"][i])
             if len(lst) >= 1:
                 print(lst)
@@ -300,8 +301,8 @@ def delete_trie_word_meaning(trie,word,meaning,verb,dictionary):
                                 meanDelete = lst[delInput-1]
                                 for i in range(len(current_dict["_end"])):
                                     if meanDelete == current_dict["_end"][i]:
-                                        meaning = current_dict["_end"][i].split(",")
-                                        meaning = ",".join(meaning[1:])
+                                        meaning = meanDelete
+                                        meaning = meaning[len(verb)+1:]
                                         del current_dict["_end"][i]
                                         print(word,verb,meaning)
                                         temp = delete_meaning_from_CSV(word,verb,meaning,dictionary,trie)
