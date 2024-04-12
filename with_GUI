@@ -1,11 +1,10 @@
 import sys
 import csv
 import os
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QLineEdit, QTextEdit, QMessageBox
 import ctypes as ct
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QLineEdit, QTextEdit, QMessageBox, QStackedWidget
 
 class DictionaryApp(QWidget):
-    
     def __init__(self):
         super().__init__()
         self.dictionary = self.dictionaryCreate('english.csv')
@@ -16,40 +15,95 @@ class DictionaryApp(QWidget):
         self.setWindowTitle('Dictionary Application')
         self.setGeometry(100, 100, 800, 600)
 
-        self.word_entry = QLineEdit(self)
-        self.verb_entry = QLineEdit(self)
-        self.meaning_entry = QTextEdit(self)
-        self.output_display = QTextEdit(self)
+        self.stackedWidget = QStackedWidget()
+
+        # Main Screen
+        main_screen = QWidget()
+        insert_button = QPushButton('Insert Word', main_screen)
+        get_button = QPushButton('Get Word', main_screen)
+        delete_button = QPushButton('Delete Word', main_screen)
+        reset_button = QPushButton('Reset Dictionary', main_screen)
         
-        insert_button = QPushButton('Insert', self)
-        insert_button.clicked.connect(self.insertWord)
-
-        get_button = QPushButton('Get', self)
-        get_button.clicked.connect(self.getWord)
-
-        delete_button = QPushButton('Delete', self)
-        delete_button.clicked.connect(self.deleteWord)
-
-        reset_button = QPushButton('Reset Dictionary', self)
+        insert_button.clicked.connect(self.showInsertScreen)
+        get_button.clicked.connect(self.showGetScreen)
+        delete_button.clicked.connect(self.showDeleteScreen)
         reset_button.clicked.connect(self.resetDictionary)
 
-        main_layout = QVBoxLayout()
-        input_layout = QHBoxLayout()
-        input_layout.addWidget(QLabel('Word:'))
-        input_layout.addWidget(self.word_entry)
-        input_layout.addWidget(QLabel('Verb:'))
-        input_layout.addWidget(self.verb_entry)
-        input_layout.addWidget(QLabel('Meaning:'))
-        
-        main_layout.addLayout(input_layout)
-        main_layout.addWidget(self.meaning_entry)
+        main_layout = QVBoxLayout(main_screen)
         main_layout.addWidget(insert_button)
         main_layout.addWidget(get_button)
         main_layout.addWidget(delete_button)
-        main_layout.addWidget(reset_button)
-        main_layout.addWidget(self.output_display)
 
-        self.setLayout(main_layout)
+        self.stackedWidget.addWidget(main_screen)
+
+        self.setLayout(QVBoxLayout(self))
+        self.layout().addWidget(self.stackedWidget)
+
+    def showInsertScreen(self):
+        insert_screen = QWidget()
+        word_entry = QLineEdit(insert_screen)
+        verb_entry = QLineEdit(insert_screen)
+        meaning_entry = QTextEdit(insert_screen)
+        insert_button = QPushButton('Insert', insert_screen)
+        back_button = QPushButton('Back', insert_screen)
+        output_display = QTextEdit(insert_screen)
+
+        insert_button.clicked.connect(lambda: self.insertWord(word_entry, verb_entry, meaning_entry, output_display))
+        back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
+
+        insert_layout = QVBoxLayout(insert_screen)
+        insert_layout.addWidget(QLabel('Word:'))
+        insert_layout.addWidget(word_entry)
+        insert_layout.addWidget(QLabel('Verb:'))
+        insert_layout.addWidget(verb_entry)
+        insert_layout.addWidget(QLabel('Meaning:'))
+        insert_layout.addWidget(meaning_entry)
+        insert_layout.addWidget(insert_button)
+        insert_layout.addWidget(back_button)
+        insert_layout.addWidget(output_display)
+
+        self.stackedWidget.addWidget(insert_screen)
+        self.stackedWidget.setCurrentWidget(insert_screen)
+
+    def showGetScreen(self):
+        get_screen = QWidget()
+        word_entry = QLineEdit(get_screen)
+        get_button = QPushButton('Get', get_screen)
+        back_button = QPushButton('Back', get_screen)
+        output_display = QTextEdit(get_screen)
+
+        get_button.clicked.connect(lambda: self.getWord(word_entry, output_display))
+        back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
+
+        get_layout = QVBoxLayout(get_screen)
+        get_layout.addWidget(QLabel('Word:'))
+        get_layout.addWidget(word_entry)
+        get_layout.addWidget(get_button)
+        get_layout.addWidget(back_button)
+        get_layout.addWidget(output_display)
+
+        self.stackedWidget.addWidget(get_screen)
+        self.stackedWidget.setCurrentWidget(get_screen)
+
+    def showDeleteScreen(self):
+        delete_screen = QWidget()
+        word_entry = QLineEdit(delete_screen)
+        delete_button = QPushButton('Delete', delete_screen)
+        back_button = QPushButton('Back', delete_screen)
+        output_display = QTextEdit(delete_screen)
+
+        delete_button.clicked.connect(lambda: self.deleteWord(word_entry, output_display))
+        back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
+
+        delete_layout = QVBoxLayout(delete_screen)
+        delete_layout.addWidget(QLabel('Word:'))
+        delete_layout.addWidget(word_entry)
+        delete_layout.addWidget(delete_button)
+        delete_layout.addWidget(back_button)
+        delete_layout.addWidget(output_display)
+
+        self.stackedWidget.addWidget(delete_screen)
+        self.stackedWidget.setCurrentWidget(delete_screen)
 
     def dictionaryCreate(self, filename):
         dictionary = {}
@@ -87,42 +141,53 @@ class DictionaryApp(QWidget):
             current_dict["_end"] = dictionary[word]
         return trie
 
+    def insertWord(self, word_entry, verb_entry, meaning_entry, output_display):
+        word = word_entry.text().strip().upper()
+        verb = verb_entry.text().strip()
+        meaning = meaning_entry.toPlainText().strip()
+        
+        if word == '' or meaning == '':
+            output_display.setText('Word and meaning cannot be empty.')
+            return
+        
+        result = self.insert_trie(self.trie, word, meaning, verb, self.dictionary)
+        output_display.setText(result)
+
     def insert_trie(self, trie, word, meaning, verb, dictionary):
-        temp = word.strip().upper()
         current_dict = trie
-        flag = True
-        for letter in temp:
+        for letter in word:
             if letter not in current_dict:
-                flag = False
-                break
+                current_dict[letter] = {}
             current_dict = current_dict[letter]
-        toBeAppended = verb.strip() + "," + meaning.strip()
-        if flag:
-            if "_end" in current_dict:
-                if toBeAppended not in current_dict["_end"]:
-                    current_dict["_end"].append(toBeAppended)
-                    self.writeToCSV(word, verb, meaning)
-                    return "Meaning added successfully"
-                else:
-                    return "Meaning already in dictionary!"
-            else:
-                current_dict["_end"] = [toBeAppended]
+        toBeAppended = verb + "," + meaning
+        if "_end" in current_dict:
+            if toBeAppended not in current_dict["_end"]:
+                current_dict["_end"].append(toBeAppended)
                 self.writeToCSV(word, verb, meaning)
-                return "Word entered successfully"
+                return "Meaning added successfully"
+            else:
+                return "Meaning already in dictionary!"
         else:
-            current_dict = trie
-            for letter in temp:
-                if letter not in current_dict:
-                    current_dict[letter] = {}
-                current_dict = current_dict[letter]
             current_dict["_end"] = [toBeAppended]
             self.writeToCSV(word, verb, meaning)
             return "Word entered successfully"
 
+    def writeToCSV(self, word, verb, meaning):
+        try:
+            with open("english.csv", "a", newline='', encoding='utf-8') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow([word, verb, meaning])
+        except FileNotFoundError:
+            QMessageBox.critical(self, 'Error', 'CSV file not found.')
+
+    def getWord(self, word_entry, output_display):
+        word = word_entry.text().strip().upper()
+        result = self.in_trie(self.trie, word, self.dictionary)
+        output_display.setText(result)
+
     def in_trie(self, trie, word, dictionary):
-        temp = word.strip().upper()
         current_dict = trie
-        for letter in temp:
+        for letter in word:
             if letter not in current_dict:
                 return "No such word in dictionary."
             current_dict = current_dict[letter]
@@ -132,10 +197,14 @@ class DictionaryApp(QWidget):
         else:
             return "No meanings found for this word in dictionary."
 
+    def deleteWord(self, word_entry, output_display):
+        word = word_entry.text().strip().upper()
+        result = self.delete_trie_word(self.trie, word, self.dictionary)
+        output_display.setText(result)
+
     def delete_trie_word(self, trie, word, dictionary):
-        temp = word.strip().upper()
         current_dict = trie
-        for letter in temp:
+        for letter in word:
             if letter not in current_dict:
                 return "No such word in dictionary."
             current_dict = current_dict[letter]
@@ -146,58 +215,32 @@ class DictionaryApp(QWidget):
             self.delete_word_from_CS(word)
             return "Word removed successfully."
 
-    def writeToCSV(self, word, verb, meaning):
-        try:
-            with open("english.csv", "a", newline='', encoding='utf-8') as csvfile:
-                writer = csv.writer(csvfile)
-                writer.writerow([word.strip(), verb.strip(), meaning.strip()])
-        except FileNotFoundError:
-            QMessageBox.critical(self, 'Error', 'CSV file not found.')
-
     def delete_word_from_CS(self, word):
         try:
             with open("english.csv", "r", newline='', encoding='utf-8') as copyf, open("transfer.csv", "w", newline='', encoding='utf-8') as f:
                 reader = csv.reader(copyf)
                 writer = csv.writer(f)
                 for row in reader:
-                    if row[0].strip().upper() != word.strip().upper():
+                    if row[0].strip().upper() != word:
                         writer.writerow(row)
             os.replace("transfer.csv", "english.csv")
         except FileNotFoundError:
             QMessageBox.critical(self, 'Error', 'CSV file not found.')
 
     def resetDictionary(self):
-        try:
-            with open("english.csv","w",newline='') as f:
-                writer = csv.writer(f)
-                with open("original.csv","r") as copyf:
-                    csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
-                    reader = csv.reader(copyf)
-                    for i, rows in enumerate(reader):
-                        writer.writerow([rows[0],rows[1],rows[2]])
-            self.dictionary = self.dictionaryCreate("english.csv")
-            self.trie = self.make_trie(self.dictionary)
-            QMessageBox.information(self, 'Success', 'Dictionary reset successfully.')
-        except FileNotFoundError:
-            QMessageBox.critical(self, 'Error', 'Original CSV file not found.')
-
-    def getWord(self):
-        word = self.word_entry.text()
-        result = self.in_trie(self.trie, word, self.dictionary)
-        self.output_display.setText(result)
-
-    def insertWord(self):
-        word = self.word_entry.text()
-        verb = self.verb_entry.text()
-        meaning = self.meaning_entry.toPlainText()
-        result = self.insert_trie(self.trie, word, meaning, verb, self.dictionary)
-        self.output_display.setText(result)
-
-    def deleteWord(self):
-        word = self.word_entry.text()
-        result = self.delete_trie_word(self.trie, word, self.dictionary)
-        self.output_display.setText(result)
-
+            try:
+                with open("english.csv","w",newline='') as f:
+                    writer = csv.writer(f)
+                    with open("original.csv","r") as copyf:
+                        csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
+                        reader = csv.reader(copyf)
+                        for i, rows in enumerate(reader):
+                            writer.writerow([rows[0],rows[1],rows[2]])
+                self.dictionary = self.dictionaryCreate("english.csv")
+                self.trie = self.make_trie(self.dictionary)
+                QMessageBox.information(self, 'Success', 'Dictionary reset successfully.')
+            except FileNotFoundError:
+                QMessageBox.critical(self, 'Error', 'Original CSV file not found.')
 
 def main():
     app = QApplication(sys.argv)
