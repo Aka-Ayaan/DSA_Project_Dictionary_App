@@ -39,6 +39,24 @@ def make_trie(dictionary):
         current_dict["_end"] = dictionary[word]
     return root
 
+#get function for letter-by-letter:
+def in_trie_by_letter(trie, currentWord, dictionary):
+    temp = currentWord.upper()
+    current_dict = trie
+    for letter in temp:
+        if letter not in current_dict:
+            print("No such words in dictionary that contain the following letters.")
+            return False
+        current_dict = current_dict[letter]
+    lst = list()
+    for i in current_dict:
+        if i == "_end":
+            continue
+        lst.append(currentWord+i.lower())
+    return lst
+
+    
+
 #get function
 def in_trie(trie, word, dictionary, returnAfterInsert = False):
     temp = word.upper()
@@ -242,31 +260,57 @@ def delete_trie_word_meaning(trie,word,meaning,verb,dictionary):
             return "Exiting..."
     else:
         if len(current_dict["_end"]) == 1:
-            if verb + "," + meaning == current_dict["_end"][0]:
+            if verb + "," + meaning in current_dict["_end"][0]:
                 while True:
-                    print(word,"only contains the one meaning. Deleting this meaning would also delete the word as there are no other meanings!. Continue?")
-                    userInput = input()
-                    if userInput.upper() == "YES":
-                        del current_dict["_end"]
-                        temp = delete_meaning_from_CSV(word,verb,meaning,dictionary,trie)
-                        trie, dictionary = temp[0], temp[1]
-                        return "Meaning and word successfully deleted."
-                    elif userInput.upper() == "NO":
-                        return "Exiting program.."
-                    else:
-                        print("Invalid input. Answer with either yes or no")
+                    print(current_dict["_end"][0])
+                    askUser = input("Is this the meaning you are looking to delete?")
+                    while True:
+                        if askUser.upper() == "YES":
+                            print(word,"only contains the one meaning. Deleting this meaning would also delete the word as there are no other meanings!. Continue?")
+                            userInput = input()
+                            if userInput.upper() == "YES":
+                                del current_dict["_end"]
+                                temp = delete_meaning_from_CSV(word,verb,meaning,dictionary,trie)
+                                trie, dictionary = temp[0], temp[1]
+                                return "Meaning and word successfully deleted."
+                            elif userInput.upper() == "NO":
+                                return "Exiting program.."
+                            else:
+                                print("Invalid input. Answer with either yes or no")
+                        elif askUser.lower() == "NO":
+                            return "Exiting program"
+                        else:
+                            print("Invalid input. Enter yes or no to continue")
             else:
                 return "No such meaning exists."
         else:
+            lst = list()
             for i in range(len(current_dict["_end"])):
                 check = verb + "," + meaning
-                if check == current_dict["_end"][i]:
-                    del current_dict["_end"][i]
-                    temp = delete_meaning_from_CSV(word,verb,meaning,dictionary,trie)
-                    trie, dictionary = temp[0], temp[1]
-                    # print(word + ": " + str(current_dict["_end"]))
-                    return "Meaning successfully deleted."
-            return "No such meaning exists."
+                if check in current_dict["_end"][i]:
+                    lst.append(current_dict["_end"][i])
+            if len(lst) >= 1:
+                print(lst)
+                getInput = input("Does the meaning you are looking to delete present in the list?")
+                while True:
+                    if getInput.upper() == "YES":
+                        delInput = int(input("Enter the number at which the meaning is present in the list to delete it: "))
+                        while True:
+                            if delInput <= len(lst):
+                                meanDelete = lst[delInput-1]
+                                for i in range(len(current_dict["_end"])):
+                                    if meanDelete == current_dict["_end"][i]:
+                                        meaning = current_dict["_end"][i].split(",")
+                                        meaning = ",".join(meaning[1:])
+                                        del current_dict["_end"][i]
+                                        print(word,verb,meaning)
+                                        temp = delete_meaning_from_CSV(word,verb,meaning,dictionary,trie)
+                                        trie, dictionary = temp[0], temp[1]
+                                        return "Meaning successfully deleted."
+                            else:
+                                print("Invalid input. Enter a number between 1 and",len(lst))
+            else:
+                return "No such meaning exists."
 
 
 dictionary = dictionaryCreate('english.csv')
@@ -325,8 +369,32 @@ while not logInFlag:
                 else:
                     print(temp)
             elif userInput == 2:
-                word = input("Enter your word: ")
-                print(in_trie(trie,word,dictionary))
+                getOpreation = int(input("Select your operation: \n1)Letter-by-letter search\n2)Ful-word search\n"))
+                while True:
+                    if getOpreation == 1:
+                        print("Enter one letter at a time. When you want to stop simply press enter without any input to stop!")
+                        collectiveInput = ""
+                        while True:
+                            getInput = input("Enter letter: ")
+                            if getInput != "":
+                                collectiveInput += getInput
+                                temp = in_trie_by_letter(trie,collectiveInput,dictionary)
+                                if type(temp) == bool:
+                                    break
+                                else:
+                                    print("Following is the list of the words that contain the letters you have inputted:")
+                                    print(temp)
+                            else:
+                                print(collectiveInput)
+                                print(in_trie(trie,collectiveInput,dictionary))
+                                break
+                        break
+                    elif getOpreation == 2:
+                        word = input("Enter your word: ")
+                        print(in_trie(trie,word,dictionary))
+                        break
+                    else:
+                        print("Invalid input. Enter 1 or 2 to continue")
             elif userInput == 3:
                 select = int(input("Choose your operation:\n1)Delete the word\n2)Delete a meaning of the word\n"))
                 flagCheck = False
@@ -338,7 +406,7 @@ while not logInFlag:
                     elif select == 2:
                         word = input("Enter your word: ")
                         verb = input("What part of speech is it? (Verb,Noun,adjective,preposition,etc). Can skip if don't know: ")
-                        meaning = input("Enter your meaning: ")
+                        meaning = input("Enter your meaning or enter a small part of the meaning: ")
                         print(delete_trie_word_meaning(trie,word,meaning,verb,dictionary))
                         flagCheck = True
                     else:
