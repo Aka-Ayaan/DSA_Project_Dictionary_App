@@ -1,20 +1,155 @@
-import sys
-import csv
 import os
 import ctypes as ct
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QLineEdit, QTextEdit, QMessageBox, QStackedWidget
+import sys
+import csv
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QPushButton, QLabel, QLineEdit, QTextEdit, QMessageBox, QStackedWidget
 
-class DictionaryApp(QWidget):
-    def __init__(self):
+class LoginScreen(QWidget):
+    
+    def __init__(self, stacked_widget):
         super().__init__()
+        self.stacked_widget = stacked_widget
+        self.initUI()
+
+    def initUI(self):
+        layout = QHBoxLayout()
+        user_button = QPushButton('User', self)
+        admin_button = QPushButton('Admin', self)
+        
+        user_button.clicked.connect(self.showUserScreen)
+        admin_button.clicked.connect(self.showAdminScreen)
+
+        label = QLabel('Choose User Type:')
+        # label.setAlignment(Qt.AlignHCenter)
+        # label.show()
+
+        layout.addWidget(label)
+        layout.addWidget(user_button)
+        layout.addWidget(admin_button)
+
+        self.setLayout(layout)
+
+    def showUserScreen(self):
+        self.stacked_widget.setCurrentIndex(1)
+
+    def showAdminScreen(self):
+        self.stacked_widget.setCurrentIndex(2)
+
+class UserScreen(QWidget):
+    
+    def __init__(self, stacked_widget):
+        super().__init__()
+        self.stacked_widget = stacked_widget
         self.dictionary = self.dictionaryCreate('english.csv')
         self.trie = self.make_trie(self.dictionary)
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle('Dictionary Application')
-        self.setGeometry(100, 100, 800, 600)
+        self.stackedWidget = QStackedWidget()
 
+        # Main Screen
+        main_screen = QWidget()
+        get_button = QPushButton('Get Word', main_screen)
+        back_button = QPushButton('Back', main_screen)
+        
+        get_button.clicked.connect(self.showGetScreen)
+        back_button.clicked.connect(self.goBack)
+
+        main_layout = QVBoxLayout(main_screen)
+        main_layout.addWidget(get_button)
+
+        self.stackedWidget.addWidget(main_screen)
+
+        self.setLayout(QVBoxLayout(self))
+        self.layout().addWidget(self.stackedWidget)
+
+    def showGetScreen(self):
+        get_screen = QWidget()
+        word_entry = QLineEdit(get_screen)
+        get_button = QPushButton('Get', get_screen)
+        back_button = QPushButton('Back', get_screen)
+        output_display = QTextEdit(get_screen)
+
+        get_button.clicked.connect(lambda: self.getWord(word_entry, output_display))
+        back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
+
+        get_layout = QVBoxLayout(get_screen)
+        get_layout.addWidget(QLabel('Word:'))
+        get_layout.addWidget(word_entry)
+        get_layout.addWidget(get_button)
+        get_layout.addWidget(back_button)
+        get_layout.addWidget(output_display)
+
+        self.stackedWidget.addWidget(get_screen)
+        self.stackedWidget.setCurrentWidget(get_screen)
+
+    def dictionaryCreate(self, filename):
+        dictionary = {}
+        try:
+            countX = 127338
+            countY = 139824
+            with open(filename) as f:
+                data = f.readlines()
+            for i in range(len(data)):
+                if i >= countX and i <= countY:
+                    data[i] = data[i].strip().split(' ')
+                else:
+                    #User-defined words from 188510
+                    data[i] = data[i].strip().split(',')
+            
+            for i in range(1,len(data)):
+                word = data[i].pop(0)
+                word = word.upper()
+                if word in dictionary:
+                    dictionary[word].append(','.join(data[i]))
+                else:
+                    dictionary[word] = [','.join(data[i])]
+        except FileNotFoundError:
+            QMessageBox.critical(self, 'Error', f'Could not find {filename}. Please make sure the file exists.')
+        return dictionary
+
+    def make_trie(self, dictionary):
+        trie = {}
+        for word in dictionary:
+            current_dict = trie
+            for letter in word:
+                if letter not in current_dict:
+                    current_dict[letter] = {}
+                current_dict = current_dict[letter]
+            current_dict["_end"] = dictionary[word]
+        return trie
+
+    def getWord(self, word_entry, output_display):
+        word = word_entry.text().strip().upper()
+        result = self.in_trie(self.trie, word, self.dictionary)
+        output_display.setText(result)
+
+    def in_trie(self, trie, word, dictionary):
+        current_dict = trie
+        for letter in word:
+            if letter not in current_dict:
+                return "No such word in dictionary."
+            current_dict = current_dict[letter]
+        if "_end" in current_dict:
+            meanings = ', '.join(current_dict["_end"])
+            return f"{word}: {meanings}"
+        else:
+            return "No meanings found for this word in dictionary."
+
+    def goBack(self):
+        self.stacked_widget.setCurrentIndex(0)
+
+class AdminScreen(QWidget):
+    
+    def __init__(self, stacked_widget):
+        super().__init__()
+        self.stacked_widget = stacked_widget
+        self.dictionary = self.dictionaryCreate('english.csv')
+        self.trie = self.make_trie(self.dictionary)
+        self.initUI()
+
+    def initUI(self):
         self.stackedWidget = QStackedWidget()
 
         # Main Screen
@@ -23,11 +158,13 @@ class DictionaryApp(QWidget):
         get_button = QPushButton('Get Word', main_screen)
         delete_button = QPushButton('Delete Word', main_screen)
         reset_button = QPushButton('Reset Dictionary', main_screen)
+        back_button = QPushButton('Back', main_screen)
         
         insert_button.clicked.connect(self.showInsertScreen)
         get_button.clicked.connect(self.showGetScreen)
         delete_button.clicked.connect(self.showDeleteScreen)
         reset_button.clicked.connect(self.resetDictionary)
+        back_button.clicked.connect(self.goBack)
 
         main_layout = QVBoxLayout(main_screen)
         main_layout.addWidget(insert_button)
@@ -242,10 +379,25 @@ class DictionaryApp(QWidget):
             except FileNotFoundError:
                 QMessageBox.critical(self, 'Error', 'Original CSV file not found.')
 
+    def goBack(self):
+        self.stacked_widget.setCurrentIndex(0)
+
 def main():
     app = QApplication(sys.argv)
-    window = DictionaryApp()
-    window.show()
+    stacked_widget = QStackedWidget()
+
+    login_screen = LoginScreen(stacked_widget)
+    user_screen = UserScreen(stacked_widget)
+    admin_screen = AdminScreen(stacked_widget)
+
+    stacked_widget.addWidget(login_screen)
+    stacked_widget.addWidget(user_screen)
+    stacked_widget.addWidget(admin_screen)
+
+    stacked_widget.setWindowTitle('Dictionary Application')
+    stacked_widget.setGeometry(100, 100, 800, 600)
+    stacked_widget.show()
+
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
