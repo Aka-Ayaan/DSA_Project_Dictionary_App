@@ -277,7 +277,7 @@ def delete_trie_word_meaning(trie,word,meaning,verb,dictionary):
                                 return "Exiting program.."
                             else:
                                 print("Invalid input. Answer with either yes or no")
-                        elif askUser.lower() == "NO":
+                        elif askUser.upper() == "NO":
                             return "Exiting program"
                         else:
                             print("Invalid input. Enter yes or no to continue")
@@ -309,6 +309,10 @@ def delete_trie_word_meaning(trie,word,meaning,verb,dictionary):
                                         return "Meaning successfully deleted."
                             else:
                                 print("Invalid input. Enter a number between 1 and",len(lst))
+                    elif getInput.upper() == "NO":
+                        return "Meaning doesn't exist"
+                    else:
+                        print("Enter yes or no to continue")
             else:
                 return "No such meaning exists."
 
