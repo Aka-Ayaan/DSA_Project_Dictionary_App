@@ -3,7 +3,7 @@ import ctypes as ct
 import sys
 import csv
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QPushButton, QLabel, QLineEdit, QTextEdit, QMessageBox, QStackedWidget, QScrollArea, QListWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QPushButton, QLabel, QLineEdit, QTextEdit, QMessageBox, QStackedWidget, QScrollArea, QListWidget, QSizePolicy, QFrame
 
 class LoginScreen(QWidget):
     def __init__(self, stacked_widget):
@@ -12,21 +12,28 @@ class LoginScreen(QWidget):
         self.initUI()
 
     def initUI(self):
-        # self.stacked_widget.setGeometry(50,50,400,300)
+        #Creates a stack of widgets so you can store screens and choose which one to display.
         self.stackedWidget = QStackedWidget()
         
+        # Window for login screen
         main_screen = QWidget()
+
+        #Defining buttons and linking them to parent widget
         user_button = QPushButton('User', main_screen)
         admin_button = QPushButton('Admin', main_screen)
 
+        #Adding functionality for what to do once the button is clicked
         user_button.clicked.connect(self.showUserScreen)
         admin_button.clicked.connect(self.passCheck)
 
+        #Layout helps us define the order of the interface. QHBox means all items on the screen would be horizontally placed.
         layout = QHBoxLayout(main_screen)
-        layout.addWidget(QLabel('Choose user type:'))
-        layout.addWidget(user_button)
-        layout.addWidget(admin_button)
+        #Adds all the widgets
+        layout.addWidget(QLabel('Choose User Type:'))
+        layout.addWidget(user_button,0)
+        layout.addWidget(admin_button,0)
         
+        #Adds the screen onto the stack and sets the current screen
         self.stackedWidget.addWidget(main_screen)
         self.setLayout(QVBoxLayout(self))
         self.layout().addWidget(self.stackedWidget)
@@ -114,10 +121,13 @@ class UserScreen(QWidget):
         get_button = QPushButton('Get', get_screen)
         back_button = QPushButton('Back', get_screen)
         output_display = QLabel(get_screen)
-
-        scroll_area = QScrollArea(get_screen)
-        scroll_area.setWidgetResizable(True)  # Ensure the widget inside the scroll area resizes with the scroll area
-        scroll_area.setWidget(output_display)
+        output_display.setFrameStyle(QFrame.Box)
+        output_display.setLineWidth(0)
+        output_display.setStyleSheet('background-color: rgb(255,255,255)')
+        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        output_display.setMargin(10)
+        output_display.setWordWrap(True)
+        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         get_button.clicked.connect(lambda: self.getWord(word_entry, output_display))
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
@@ -127,19 +137,19 @@ class UserScreen(QWidget):
         get_layout.addWidget(word_entry)
         get_layout.addWidget(get_button)
         get_layout.addWidget(back_button)
-        get_layout.addWidget(scroll_area)
-
+        get_layout.addWidget(output_display)
         self.stackedWidget.addWidget(get_screen)
         self.stackedWidget.setCurrentWidget(get_screen)
 
     def dictionaryCreate(self, filename):
         dictionary = {}
         try:
-            with open(filename) as f:
-                data = f.readlines()
-            for i in range(len(data)):
-                #User-defined words from 188510
-                data[i] = data[i].strip().split(',')
+            data = list()
+            with open(filename,"r") as f:
+                csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
+                reader = csv.reader(f)
+                for row in reader:
+                    data.append(row)
             
             for i in range(1,len(data)):
                 word = data[i].pop(0)
@@ -175,8 +185,11 @@ class UserScreen(QWidget):
                 return "No such word in dictionary."
             current_dict = current_dict[letter]
         if "_end" in current_dict:
-            meanings = ', '.join(current_dict["_end"])
-            return f"{word}: {meanings}"
+            meanings = ''
+            for i in range(len(current_dict["_end"])):
+                meanings += str(i+1) + ") " + current_dict["_end"][i] + "\n"
+            meanings = meanings[:-1]
+            return f"{word}:\n{meanings}"
         else:
             return "No such word in dicitonary."
 
@@ -235,10 +248,14 @@ class AdminScreen(QWidget):
         insert_button = QPushButton('Insert', insert_screen)
         back_button = QPushButton('Back', insert_screen)
         output_display = QLabel(insert_screen)
+        output_display.setFrameStyle(QFrame.Box)
+        output_display.setLineWidth(0)
+        output_display.setStyleSheet('background-color: rgb(255,255,255)')
+        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        output_display.setMargin(10)
+        output_display.setWordWrap(True)
+        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        scroll_area = QScrollArea(insert_screen)
-        scroll_area.setWidgetResizable(True)  # Ensure the widget inside the scroll area resizes with the scroll area
-        scroll_area.setWidget(output_display)
 
         insert_button.clicked.connect(lambda: self.insertWord(word_entry, verb_entry, meaning_entry, output_display))
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
@@ -253,7 +270,7 @@ class AdminScreen(QWidget):
         insert_layout.addWidget(insert_button)
         insert_layout.addWidget(back_button)
         insert_layout.addWidget(QLabel('Output:'))
-        insert_layout.addWidget(scroll_area)
+        insert_layout.addWidget(output_display)
 
         self.stackedWidget.addWidget(insert_screen)
         self.stackedWidget.setCurrentWidget(insert_screen)
@@ -264,10 +281,14 @@ class AdminScreen(QWidget):
         get_button = QPushButton('Get', get_screen)
         back_button = QPushButton('Back', get_screen)
         output_display = QLabel(get_screen)
+        output_display.setFrameStyle(QFrame.Box)
+        output_display.setLineWidth(0)
+        output_display.setStyleSheet('background-color: rgb(255,255,255)')
+        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        output_display.setMargin(10)
+        output_display.setWordWrap(True)
+        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        scroll_area = QScrollArea(get_screen)
-        scroll_area.setWidgetResizable(True)  # Ensure the widget inside the scroll area resizes with the scroll area
-        scroll_area.setWidget(output_display)
 
         get_button.clicked.connect(lambda: self.getWord(word_entry, output_display))
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
@@ -278,7 +299,7 @@ class AdminScreen(QWidget):
         get_layout.addWidget(get_button)
         get_layout.addWidget(back_button)
         get_layout.addWidget(QLabel('Output:'))
-        get_layout.addWidget(scroll_area)
+        get_layout.addWidget(output_display)
 
         self.stackedWidget.addWidget(get_screen)
         self.stackedWidget.setCurrentWidget(get_screen)
@@ -289,10 +310,13 @@ class AdminScreen(QWidget):
         delete_button = QPushButton('Delete', delete_screen)
         back_button = QPushButton('Back', delete_screen)
         output_display = QLabel(delete_screen)
-
-        scroll_area = QScrollArea(delete_screen)
-        scroll_area.setWidgetResizable(True)  # Ensure the widget inside the scroll area resizes with the scroll area
-        scroll_area.setWidget(output_display)
+        output_display.setFrameStyle(QFrame.Box)
+        output_display.setLineWidth(0)
+        output_display.setStyleSheet('background-color: rgb(255,255,255)')
+        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        output_display.setMargin(10)
+        output_display.setWordWrap(True)
+        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         delete_button.clicked.connect(lambda: self.deleteWord(word_entry, output_display))
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
@@ -303,7 +327,7 @@ class AdminScreen(QWidget):
         delete_layout.addWidget(delete_button)
         delete_layout.addWidget(back_button)
         delete_layout.addWidget(QLabel('Output:'))
-        delete_layout.addWidget(scroll_area)
+        delete_layout.addWidget(output_display)
 
         self.stackedWidget.addWidget(delete_screen)
         self.stackedWidget.setCurrentWidget(delete_screen)
@@ -316,10 +340,14 @@ class AdminScreen(QWidget):
         delete_button = QPushButton('Find Meanings', delete_meaning_screen)
         back_button = QPushButton('Back', delete_meaning_screen)
         output_display = QLabel(delete_meaning_screen)
+        output_display.setFrameStyle(QFrame.Box)
+        output_display.setLineWidth(0)
+        output_display.setStyleSheet('background-color: rgb(255,255,255)')
+        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        output_display.setMargin(10)
+        output_display.setWordWrap(True)
+        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        scroll_area = QScrollArea(delete_meaning_screen)
-        scroll_area.setWidgetResizable(True)  # Ensure the widget inside the scroll area resizes with the scroll area
-        scroll_area.setWidget(output_display)
 
         delete_button.clicked.connect(lambda: self.deleteMeaning(word_entry, verb_entry, meaning_entry , output_display))
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
@@ -334,7 +362,7 @@ class AdminScreen(QWidget):
         delete_layout.addWidget(delete_button)
         delete_layout.addWidget(back_button)
         delete_layout.addWidget(QLabel('Output:'))
-        delete_layout.addWidget(scroll_area)
+        delete_layout.addWidget(output_display)
 
         self.stackedWidget.addWidget(delete_meaning_screen)
         self.stackedWidget.setCurrentWidget(delete_meaning_screen)
@@ -370,28 +398,33 @@ class AdminScreen(QWidget):
 
     def show_delete_meaning_list(self, trie, word, verb, lst, dictionary):
         delete_meaning_list_screen = QWidget()
-        # buttons = []
-        output_display = QLabel(delete_meaning_list_screen)
-
-        scroll_area = QScrollArea(delete_meaning_list_screen)
-        scroll_area.setWidgetResizable(True)  # Ensure the widget inside the scroll area resizes with the scroll area
-        scroll_area.setWidget(output_display)
+        
+        back_button = QPushButton('Back', delete_meaning_list_screen)
+        select_meaning = QPushButton('Delete Selected Meaning',delete_meaning_list_screen)
         list_widget = QListWidget(self)
         for meaning in lst:
             list_widget.addItem(meaning)
         list_widget.setWordWrap(True)
 
-        back_button = QPushButton('Back', delete_meaning_list_screen)
-        select_meaning = QPushButton('Delete Selected Meaning',delete_meaning_list_screen)
+        output_display = QLabel(delete_meaning_list_screen)
+        output_display.setFrameStyle(QFrame.Box)
+        output_display.setLineWidth(0)
+        output_display.setStyleSheet('background-color: rgb(255,255,255)')
+        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        output_display.setMargin(10)
+        output_display.setWordWrap(True)
+        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
-        # list_widget.itemClicked.connect(lambda: self.deleteList(word,verb,list_widget.currentItem().text(),output_display))
         select_meaning.clicked.connect(lambda: self.deleteList(word,verb,list_widget.currentItem().text(),output_display, list_widget, list_widget.currentRow()))
+
         delete_meaning_layout = QVBoxLayout(delete_meaning_list_screen)
         delete_meaning_layout.addWidget(QLabel('Select a meaning from the list'))
         delete_meaning_layout.addWidget(list_widget)
         delete_meaning_layout.addWidget(back_button)
         delete_meaning_layout.addWidget(select_meaning)
-        delete_meaning_layout.addWidget(scroll_area)
+        delete_meaning_layout.addWidget(output_display)
 
         self.stackedWidget.addWidget(delete_meaning_list_screen)
         self.stackedWidget.setCurrentWidget(delete_meaning_list_screen)
@@ -447,13 +480,14 @@ class AdminScreen(QWidget):
         getFinalWord_button = QPushButton('Get meaning of the word', getLetter_screen)
         back_button = QPushButton('Back', getLetter_screen)
         output_display = QLabel(getLetter_screen)
-        
-        # Create a scroll area to contain the output label
-        scroll_area = QScrollArea(getLetter_screen)
-        scroll_area.setWidgetResizable(True)  # Ensure the widget inside the scroll area resizes with the scroll area
-        scroll_area.setWidget(output_display)  # Set the output label as the widget in the scroll area
+        output_display.setFrameStyle(QFrame.Box)
+        output_display.setLineWidth(0)
+        output_display.setStyleSheet('background-color: rgb(255,255,255)')
+        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        output_display.setMargin(10)
+        output_display.setWordWrap(True)
+        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        output_display.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         # Connect buttons to slots
         getLetter_button.clicked.connect(lambda: self.getLetterWord(letter_entry, output_display))
         getFinalWord_button.clicked.connect(lambda: self.finalWord(output_display))
@@ -467,7 +501,7 @@ class AdminScreen(QWidget):
         get_letter_layout.addWidget(getFinalWord_button)
         get_letter_layout.addWidget(back_button)
         get_letter_layout.addWidget(QLabel('Output'))
-        get_letter_layout.addWidget(scroll_area)  # Add the scroll area to the layout
+        get_letter_layout.addWidget(output_display)  # Add the scroll area to the layout
 
         # Add screen to stacked widget
         self.stackedWidget.addWidget(getLetter_screen)
@@ -476,11 +510,12 @@ class AdminScreen(QWidget):
     def dictionaryCreate(self, filename):
         dictionary = {}
         try:
-            with open(filename) as f:
-                data = f.readlines()
-            for i in range(len(data)):
-                #User-defined words from 188510
-                data[i] = data[i].strip().split(',')
+            data = list()
+            with open(filename,"r") as f:
+                csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
+                reader = csv.reader(f)
+                for row in reader:
+                    data.append(row)
             
             for i in range(1,len(data)):
                 word = data[i].pop(0)
@@ -555,9 +590,11 @@ class AdminScreen(QWidget):
                 return "No such word in dictionary."
             current_dict = current_dict[letter]
         if "_end" in current_dict:
-            print(current_dict["_end"])
-            meanings = ', '.join(current_dict["_end"])
-            return f"{word}: {meanings}"
+            meanings = ''
+            for i in range(len(current_dict["_end"])):
+                meanings += str(i+1) + ") " + current_dict["_end"][i] + "\n"
+            meanings = meanings[:-1]
+            return f"{word}:\n{meanings}"
         else:
             return "No such word in dictionary."
         

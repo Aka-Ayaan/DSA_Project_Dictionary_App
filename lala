@@ -177,10 +177,6 @@ class DictionaryApp(QWidget):
         except FileNotFoundError:
             QMessageBox.critical(self, 'Error', 'CSV file not found.')
 
-            os.replace("transfer.csv", "english.csv")
-        except FileNotFoundError:
-            QMessageBox.critical(self, 'Error', 'CSV file not found.')
-
     def deleteWord(self, word_entry, output_display):
         word = word_entry.text().strip().upper()
         result = self.delete_trie_word(self.trie, word, self.dictionary)
