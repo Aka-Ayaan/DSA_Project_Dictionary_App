@@ -62,6 +62,7 @@ class passCheck(QWidget):
         main_screen = QWidget()
         passText = QLabel('Enter password:',main_screen)
         passEnter = QLineEdit(main_screen)
+        passEnter.setEchoMode(QLineEdit.Password)
         passCheck_button = QPushButton('Log in',main_screen)
         back_button = QPushButton('Back',main_screen)
 
@@ -80,8 +81,9 @@ class passCheck(QWidget):
         self.layout().addWidget(self.stackedWidget)
 
     def checkPass(self,passEnter):
-        passEnter = passEnter.text().strip()
-        if passEnter == "hehe":
+        passCheck = passEnter.text().strip()
+        if passCheck == "hehe":
+            passEnter.clear()
             self.stacked_widget.setCurrentIndex(3)
         else:
             QMessageBox.critical(self, 'Error', 'Wrong Password. Try again')
@@ -128,6 +130,7 @@ class UserScreen(QWidget):
         letter_entry = QLineEdit(getLetter_screen)
         getLetter_button = QPushButton('Get words with letter', getLetter_screen)
         getFinalWord_button = QPushButton('Get meaning of the word', getLetter_screen)
+        reset_button = QPushButton('Reset sequence',getLetter_screen)
         back_button = QPushButton('Back', getLetter_screen)
         output_display = QLabel(getLetter_screen)
         output_display.setObjectName("specialLabel")
@@ -142,6 +145,7 @@ class UserScreen(QWidget):
         getLetter_button.clicked.connect(lambda: self.getLetterWord(letter_entry, output_display))
         getFinalWord_button.clicked.connect(lambda: self.finalWord(output_display))
         back_button.clicked.connect(lambda: self.delete_clicked())
+        reset_button.clicked.connect(lambda: self.reset_clicked(output_display))
 
         # Create layout
         get_letter_layout = QVBoxLayout(getLetter_screen)
@@ -150,6 +154,7 @@ class UserScreen(QWidget):
         get_letter_layout.addWidget(getLetter_button)
         get_letter_layout.addWidget(getFinalWord_button)
         get_letter_layout.addWidget(back_button)
+        get_letter_layout.addWidget(reset_button)
         get_letter_layout.addWidget(QLabel('Output'))
         get_letter_layout.addWidget(output_display)  # Add the scroll area to the layout
 
@@ -244,8 +249,9 @@ class UserScreen(QWidget):
             letter_entry = self.currentWord
             result = self.in_trie_by_letter(self.trie,letter_entry,self.dictionary)
             if "No such words" in result:
-                output_display.setText(result)
-                self.currentWord = ''
+                self.currentWord = self.currentWord[:-1]
+                if "No words with the" not in output_display.text():
+                    output_display.setText('No words with the inputted letter. Kindly pick a letter from one of the following combinations\n' + output_display.text())
             else:
                 result = ", ".join(result)
                 output_display.setText(result)
@@ -273,6 +279,10 @@ class UserScreen(QWidget):
     def delete_clicked(self):
         self.stackedWidget.setCurrentIndex(0)
         self.currentWord = ''
+
+    def reset_clicked(self,output_display):
+        self.currentWord = ''
+        output_display.setText('Sequence resetted!')
 
     def goBack(self):
         self.stacked_widget.setCurrentIndex(0)
@@ -328,6 +338,7 @@ class AdminScreen(QWidget):
         letter_entry = QLineEdit(getLetter_screen)
         getLetter_button = QPushButton('Get words with letter', getLetter_screen)
         getFinalWord_button = QPushButton('Get meaning of the word', getLetter_screen)
+        reset_button = QPushButton('Reset sequence',getLetter_screen)
         back_button = QPushButton('Back', getLetter_screen)
         output_display = QLabel(getLetter_screen)
         output_display.setObjectName("specialLabel")
@@ -342,6 +353,7 @@ class AdminScreen(QWidget):
         getLetter_button.clicked.connect(lambda: self.getLetterWord(letter_entry, output_display))
         getFinalWord_button.clicked.connect(lambda: self.finalWord(output_display))
         back_button.clicked.connect(lambda: self.delete_clicked())
+        reset_button.clicked.connect(lambda: self.reset_clicked(output_display))
 
         # Create layout
         get_letter_layout = QVBoxLayout(getLetter_screen)
@@ -350,6 +362,7 @@ class AdminScreen(QWidget):
         get_letter_layout.addWidget(getLetter_button)
         get_letter_layout.addWidget(getFinalWord_button)
         get_letter_layout.addWidget(back_button)
+        get_letter_layout.addWidget(reset_button)
         get_letter_layout.addWidget(QLabel('Output'))
         get_letter_layout.addWidget(output_display)  # Add the scroll area to the layout
 
@@ -751,11 +764,16 @@ class AdminScreen(QWidget):
             letter_entry = self.currentWord
             result = self.in_trie_by_letter(self.trie,letter_entry,self.dictionary)
             if "No such words" in result:
-                output_display.setText(result)
-                self.currentWord = ''
+                self.currentWord = self.currentWord[:-1]
+                if "No words with the" not in output_display.text():
+                    output_display.setText('No words with the inputted letter. Kindly pick a letter from one of the following combinations\n' + output_display.text())
             else:
                 result = ", ".join(result)
                 output_display.setText(result)
+    
+    def reset_clicked(self,output_display):
+        self.currentWord = ''
+        output_display.setText('Sequence resetted')
 
     def finalWord(self,output_display):
         temp = self.currentWord.upper()
