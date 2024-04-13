@@ -74,7 +74,6 @@ class passCheck(QWidget):
         main_layout.addWidget(passText)
         main_layout.addWidget(passEnter)
         main_layout.addWidget(passCheck_button)
-        # main_layout.addWidget(back_button)
 
         self.stackedWidget.addWidget(main_screen)
         # self.stackedWidget.setCurrentWidget(main_screen)
