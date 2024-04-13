@@ -30,6 +30,7 @@ class LoginScreen(QWidget):
         #Layout helps us define the order of the interface. QHBox means all items on the screen would be horizontally placed.
         layout = QHBoxLayout(main_screen)
         label = QLabel('Choose User Type:',main_screen)
+        label.adjustSize()
         #Adds all the widgets
         # layout.addWidget(QLabel('Choose User Type:'))
         layout.addWidget(user_button,0)
