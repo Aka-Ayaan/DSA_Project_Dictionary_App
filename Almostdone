@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QPushButton, QLabel, QLineEdit, QTextEdit, QMessageBox, QStackedWidget, QScrollArea, QListWidget, QSizePolicy, QFrame
 
 class LoginScreen(QWidget):
+    
     def __init__(self, stacked_widget):
         super().__init__()
         self.stacked_widget = stacked_widget
@@ -28,8 +29,9 @@ class LoginScreen(QWidget):
 
         #Layout helps us define the order of the interface. QHBox means all items on the screen would be horizontally placed.
         layout = QHBoxLayout(main_screen)
+        label = QLabel('Choose User Type:',main_screen)
         #Adds all the widgets
-        layout.addWidget(QLabel('Choose User Type:'))
+        # layout.addWidget(QLabel('Choose User Type:'))
         layout.addWidget(user_button,0)
         layout.addWidget(admin_button,0)
         
@@ -48,6 +50,7 @@ class LoginScreen(QWidget):
         self.stacked_widget.setCurrentIndex(3)
 
 class passCheck(QWidget):
+    
     def __init__(self,stacked_widget):
         super().__init__()
         self.stacked_widget = stacked_widget
@@ -86,7 +89,6 @@ class passCheck(QWidget):
     def goBack(self):
         self.stacked_widget.setCurrentIndex(0)
 
-
 class UserScreen(QWidget):
     
     def __init__(self, stacked_widget):
@@ -94,6 +96,7 @@ class UserScreen(QWidget):
         self.stacked_widget = stacked_widget
         self.dictionary = self.dictionaryCreate('english.csv')
         self.trie = self.make_trie(self.dictionary)
+        self.currentWord = ''
         self.initUI()
 
     def initUI(self):
@@ -102,18 +105,57 @@ class UserScreen(QWidget):
         # Main Screen
         main_screen = QWidget()
         get_button = QPushButton('Get Word', main_screen)
+        get_letter_button = QPushButton('Get Word Letter-by-letter',main_screen)
         back_button = QPushButton('Back', main_screen)
         
         get_button.clicked.connect(self.showGetScreen)
+        get_letter_button.clicked.connect(self.getLetterScreen)
         back_button.clicked.connect(self.goBack)
 
         main_layout = QVBoxLayout(main_screen)
         main_layout.addWidget(get_button)
+        main_layout.addWidget(get_letter_button)
 
         self.stackedWidget.addWidget(main_screen)
 
         self.setLayout(QVBoxLayout(self))
         self.layout().addWidget(self.stackedWidget)
+
+    def getLetterScreen(self):
+        getLetter_screen = QWidget()
+
+        # Create widgets
+        letter_entry = QLineEdit(getLetter_screen)
+        getLetter_button = QPushButton('Get words with letter', getLetter_screen)
+        getFinalWord_button = QPushButton('Get meaning of the word', getLetter_screen)
+        back_button = QPushButton('Back', getLetter_screen)
+        output_display = QLabel(getLetter_screen)
+        output_display.setObjectName("specialLabel")
+        output_display.setFrameStyle(QFrame.Box)
+        output_display.setLineWidth(0)
+        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        output_display.setMargin(10)
+        output_display.setWordWrap(True)
+        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # Connect buttons to slots
+        getLetter_button.clicked.connect(lambda: self.getLetterWord(letter_entry, output_display))
+        getFinalWord_button.clicked.connect(lambda: self.finalWord(output_display))
+        back_button.clicked.connect(lambda: self.delete_clicked())
+
+        # Create layout
+        get_letter_layout = QVBoxLayout(getLetter_screen)
+        get_letter_layout.addWidget(QLabel('Letter:'))
+        get_letter_layout.addWidget(letter_entry)
+        get_letter_layout.addWidget(getLetter_button)
+        get_letter_layout.addWidget(getFinalWord_button)
+        get_letter_layout.addWidget(back_button)
+        get_letter_layout.addWidget(QLabel('Output'))
+        get_letter_layout.addWidget(output_display)  # Add the scroll area to the layout
+
+        # Add screen to stacked widget
+        self.stackedWidget.addWidget(getLetter_screen)
+        self.stackedWidget.setCurrentWidget(getLetter_screen)    
 
     def showGetScreen(self):
         get_screen = QWidget()
@@ -121,9 +163,9 @@ class UserScreen(QWidget):
         get_button = QPushButton('Get', get_screen)
         back_button = QPushButton('Back', get_screen)
         output_display = QLabel(get_screen)
+        output_display.setObjectName("specialLabel")
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
-        output_display.setStyleSheet('background-color: rgb(255,255,255)')
         output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         output_display.setMargin(10)
         output_display.setWordWrap(True)
@@ -193,6 +235,45 @@ class UserScreen(QWidget):
         else:
             return "No such word in dicitonary."
 
+    def getLetterWord(self,letter_entry,output_display):
+        letter_entry = letter_entry.text().strip()
+        if len(letter_entry) > 1:
+            output_display.setText("Invalid input. Enter one letter at a time.")
+        else:
+            self.currentWord += letter_entry
+            letter_entry = self.currentWord
+            result = self.in_trie_by_letter(self.trie,letter_entry,self.dictionary)
+            if "No such words" in result:
+                output_display.setText(result)
+                self.currentWord = ''
+            else:
+                result = ", ".join(result)
+                output_display.setText(result)
+
+    def finalWord(self,output_display):
+        temp = self.currentWord.upper()
+        result = self.in_trie(self.trie,temp,self.dictionary)
+        self.currentWord = ''
+        output_display.setText(result)
+
+    def in_trie_by_letter(self, trie, currentWord, dictionary):
+        temp = currentWord.upper()
+        current_dict = trie
+        for letter in temp:
+            if letter not in current_dict:
+                return "No such words in dictionary that contain the following letters."
+            current_dict = current_dict[letter]
+        lst = list()
+        for i in current_dict:
+            if i == "_end":
+                continue
+            lst.append(currentWord+i.lower())
+        return lst
+
+    def delete_clicked(self):
+        self.stackedWidget.setCurrentIndex(0)
+        self.currentWord = ''
+
     def goBack(self):
         self.stacked_widget.setCurrentIndex(0)
 
@@ -240,6 +321,42 @@ class AdminScreen(QWidget):
         self.setLayout(QVBoxLayout(self))
         self.layout().addWidget(self.stackedWidget)
 
+    def getLetterScreen(self):
+        getLetter_screen = QWidget()
+
+        # Create widgets
+        letter_entry = QLineEdit(getLetter_screen)
+        getLetter_button = QPushButton('Get words with letter', getLetter_screen)
+        getFinalWord_button = QPushButton('Get meaning of the word', getLetter_screen)
+        back_button = QPushButton('Back', getLetter_screen)
+        output_display = QLabel(getLetter_screen)
+        output_display.setObjectName("specialLabel")
+        output_display.setFrameStyle(QFrame.Box)
+        output_display.setLineWidth(0)
+        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        output_display.setMargin(10)
+        output_display.setWordWrap(True)
+        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # Connect buttons to slots
+        getLetter_button.clicked.connect(lambda: self.getLetterWord(letter_entry, output_display))
+        getFinalWord_button.clicked.connect(lambda: self.finalWord(output_display))
+        back_button.clicked.connect(lambda: self.delete_clicked())
+
+        # Create layout
+        get_letter_layout = QVBoxLayout(getLetter_screen)
+        get_letter_layout.addWidget(QLabel('Letter:'))
+        get_letter_layout.addWidget(letter_entry)
+        get_letter_layout.addWidget(getLetter_button)
+        get_letter_layout.addWidget(getFinalWord_button)
+        get_letter_layout.addWidget(back_button)
+        get_letter_layout.addWidget(QLabel('Output'))
+        get_letter_layout.addWidget(output_display)  # Add the scroll area to the layout
+
+        # Add screen to stacked widget
+        self.stackedWidget.addWidget(getLetter_screen)
+        self.stackedWidget.setCurrentWidget(getLetter_screen)
+
     def showInsertScreen(self):
         insert_screen = QWidget()
         word_entry = QLineEdit(insert_screen)
@@ -248,9 +365,9 @@ class AdminScreen(QWidget):
         insert_button = QPushButton('Insert', insert_screen)
         back_button = QPushButton('Back', insert_screen)
         output_display = QLabel(insert_screen)
+        output_display.setObjectName("specialLabel")
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
-        output_display.setStyleSheet('background-color: rgb(255,255,255)')
         output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         output_display.setMargin(10)
         output_display.setWordWrap(True)
@@ -281,9 +398,9 @@ class AdminScreen(QWidget):
         get_button = QPushButton('Get', get_screen)
         back_button = QPushButton('Back', get_screen)
         output_display = QLabel(get_screen)
+        output_display.setObjectName("specialLabel")
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
-        output_display.setStyleSheet('background-color: rgb(255,255,255)')
         output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         output_display.setMargin(10)
         output_display.setWordWrap(True)
@@ -310,9 +427,9 @@ class AdminScreen(QWidget):
         delete_button = QPushButton('Delete', delete_screen)
         back_button = QPushButton('Back', delete_screen)
         output_display = QLabel(delete_screen)
+        output_display.setObjectName("specialLabel")
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
-        output_display.setStyleSheet('background-color: rgb(255,255,255)')
         output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         output_display.setMargin(10)
         output_display.setWordWrap(True)
@@ -340,9 +457,9 @@ class AdminScreen(QWidget):
         delete_button = QPushButton('Find Meanings', delete_meaning_screen)
         back_button = QPushButton('Back', delete_meaning_screen)
         output_display = QLabel(delete_meaning_screen)
+        output_display.setObjectName("specialLabel")
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
-        output_display.setStyleSheet('background-color: rgb(255,255,255)')
         output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         output_display.setMargin(10)
         output_display.setWordWrap(True)
@@ -407,9 +524,9 @@ class AdminScreen(QWidget):
         list_widget.setWordWrap(True)
 
         output_display = QLabel(delete_meaning_list_screen)
+        output_display.setObjectName("specialLabel")
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
-        output_display.setStyleSheet('background-color: rgb(255,255,255)')
         output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         output_display.setMargin(10)
         output_display.setWordWrap(True)
@@ -456,7 +573,6 @@ class AdminScreen(QWidget):
                     self.delete_meaning_from_CSV(word,verb,meaning,dictionary,trie)
                     return "Meaning successfully deleted."
     
-
     def delete_meaning_from_CSV(self, word, verb, meaning, dictionary, trie):
         try:
             meaning = meaning.strip('"')
@@ -470,42 +586,6 @@ class AdminScreen(QWidget):
             os.replace("transfer.csv", "english.csv")
         except FileNotFoundError:
             QMessageBox.critical(self, 'Error', 'CSV file not found.')
-
-    def getLetterScreen(self):
-        getLetter_screen = QWidget()
-
-        # Create widgets
-        letter_entry = QLineEdit(getLetter_screen)
-        getLetter_button = QPushButton('Get words with letter', getLetter_screen)
-        getFinalWord_button = QPushButton('Get meaning of the word', getLetter_screen)
-        back_button = QPushButton('Back', getLetter_screen)
-        output_display = QLabel(getLetter_screen)
-        output_display.setFrameStyle(QFrame.Box)
-        output_display.setLineWidth(0)
-        output_display.setStyleSheet('background-color: rgb(255,255,255)')
-        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        output_display.setMargin(10)
-        output_display.setWordWrap(True)
-        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        # Connect buttons to slots
-        getLetter_button.clicked.connect(lambda: self.getLetterWord(letter_entry, output_display))
-        getFinalWord_button.clicked.connect(lambda: self.finalWord(output_display))
-        back_button.clicked.connect(lambda: self.delete_clicked())
-
-        # Create layout
-        get_letter_layout = QVBoxLayout(getLetter_screen)
-        get_letter_layout.addWidget(QLabel('Letter:'))
-        get_letter_layout.addWidget(letter_entry)
-        get_letter_layout.addWidget(getLetter_button)
-        get_letter_layout.addWidget(getFinalWord_button)
-        get_letter_layout.addWidget(back_button)
-        get_letter_layout.addWidget(QLabel('Output'))
-        get_letter_layout.addWidget(output_display)  # Add the scroll area to the layout
-
-        # Add screen to stacked widget
-        self.stackedWidget.addWidget(getLetter_screen)
-        self.stackedWidget.setCurrentWidget(getLetter_screen)
 
     def dictionaryCreate(self, filename):
         dictionary = {}
@@ -643,7 +723,6 @@ class AdminScreen(QWidget):
         except FileNotFoundError:
             QMessageBox.critical(self, 'Error', 'CSV file not found.')
     
-
     def resetDictionary(self):
             try:
                 with open("english.csv","w",newline='') as f:
@@ -691,6 +770,8 @@ def main():
     app = QApplication(sys.argv)
     stacked_widget = QStackedWidget()
 
+    stacked_widget.setStyleSheet(open('Style.css').read())
+
     login_screen = LoginScreen(stacked_widget)
     pass_check = passCheck(stacked_widget)
     user_screen = UserScreen(stacked_widget)
@@ -702,7 +783,8 @@ def main():
     stacked_widget.addWidget(admin_screen)
 
     stacked_widget.setWindowTitle('Dictionary Application')
-    stacked_widget.setGeometry(100, 100, 800, 600)
+    stacked_widget.setFixedHeight(stacked_widget.sizeHint().height() + 200)
+    stacked_widget.setFixedWidth(stacked_widget.sizeHint().width() + 100)
     stacked_widget.show()
 
     sys.exit(app.exec_())
