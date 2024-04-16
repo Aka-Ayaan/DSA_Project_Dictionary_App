@@ -2,8 +2,45 @@ import os
 import ctypes as ct
 import sys
 import csv
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QPushButton, QLabel, QLineEdit, QTextEdit, QMessageBox, QStackedWidget, QScrollArea, QListWidget, QSizePolicy, QFrame
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+
+class ScrollLabel(QScrollArea):
+ 
+    # constructor
+    def __init__(self, *args, **kwargs):
+        QScrollArea.__init__(self, *args, **kwargs)
+ 
+        # making widget resizable
+        self.setWidgetResizable(True)
+ 
+        # making qwidget object
+        content = QWidget(self)
+        self.setWidget(content)
+ 
+        # vertical box layout
+        lay = QVBoxLayout(content)
+ 
+        # creating label
+        self.label = QLabel(content)
+        self.label.setObjectName("specialLabel")
+        self.label.setMargin(10)
+
+ 
+        # setting alignment to the text
+        self.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+ 
+        # making label multi-line
+        self.label.setWordWrap(True)
+ 
+        # adding label to the layout
+        lay.addWidget(self.label)
+ 
+    # the setText method
+    def setText(self, text):
+        # setting text to the label
+        self.label.setText(text)
 
 class LoginScreen(QWidget):
     
@@ -97,13 +134,12 @@ class UserScreen(QWidget):
         super().__init__()
         self.stacked_widget = stacked_widget
         self.dictionary = self.dictionaryCreate('english.csv')
-        self.trie = self.make_trie(self.dictionary)
+        self.trie = self.make_trie()
         self.currentWord = ''
         self.initUI()
 
     def initUI(self):
         self.stackedWidget = QStackedWidget()
-
         # Main Screen
         main_screen = QWidget()
         get_button = QPushButton('Get Word', main_screen)
@@ -125,21 +161,17 @@ class UserScreen(QWidget):
 
     def getLetterScreen(self):
         getLetter_screen = QWidget()
-
+        self.dictionary = self.dictionaryCreate('english.csv')
+        self.trie = self.make_trie()
         # Create widgets
         letter_entry = QLineEdit(getLetter_screen)
         getLetter_button = QPushButton('Get words with letter', getLetter_screen)
         getFinalWord_button = QPushButton('Get meaning of the word', getLetter_screen)
         reset_button = QPushButton('Reset sequence',getLetter_screen)
         back_button = QPushButton('Back', getLetter_screen)
-        output_display = QLabel(getLetter_screen)
-        output_display.setObjectName("specialLabel")
+        output_display = ScrollLabel(self)
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
-        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        output_display.setMargin(10)
-        output_display.setWordWrap(True)
-        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         # Connect buttons to slots
         getLetter_button.clicked.connect(lambda: self.getLetterWord(letter_entry, output_display))
@@ -163,18 +195,16 @@ class UserScreen(QWidget):
         self.stackedWidget.setCurrentWidget(getLetter_screen)    
 
     def showGetScreen(self):
+        self.dictionary = self.dictionaryCreate('english.csv')
+        self.trie = self.make_trie()
         get_screen = QWidget()
         word_entry = QLineEdit(get_screen)
         get_button = QPushButton('Get', get_screen)
         back_button = QPushButton('Back', get_screen)
-        output_display = QLabel(get_screen)
-        output_display.setObjectName("specialLabel")
+
+        output_display = ScrollLabel(self)
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
-        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        output_display.setMargin(10)
-        output_display.setWordWrap(True)
-        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         get_button.clicked.connect(lambda: self.getWord(word_entry, output_display))
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
@@ -184,6 +214,7 @@ class UserScreen(QWidget):
         get_layout.addWidget(word_entry)
         get_layout.addWidget(get_button)
         get_layout.addWidget(back_button)
+        get_layout.addWidget(QLabel('Output:'))
         get_layout.addWidget(output_display)
         self.stackedWidget.addWidget(get_screen)
         self.stackedWidget.setCurrentWidget(get_screen)
@@ -209,24 +240,24 @@ class UserScreen(QWidget):
             QMessageBox.critical(self, 'Error', f'Could not find {filename}. Please make sure the file exists.')
         return dictionary
 
-    def make_trie(self, dictionary):
+    def make_trie(self):
         trie = {}
-        for word in dictionary:
+        for word in self.dictionary:
             current_dict = trie
             for letter in word:
                 if letter not in current_dict:
                     current_dict[letter] = {}
                 current_dict = current_dict[letter]
-            current_dict["_end"] = dictionary[word]
+            current_dict["_end"] = self.dictionary[word]
         return trie
 
     def getWord(self, word_entry, output_display):
         word = word_entry.text().strip().upper()
-        result = self.in_trie(self.trie, word, self.dictionary)
+        result = self.in_trie(word)
         output_display.setText(result)
 
-    def in_trie(self, trie, word, dictionary):
-        current_dict = trie
+    def in_trie(self, word):
+        current_dict = self.trie
         for letter in word:
             if letter not in current_dict:
                 return "No such word in dictionary."
@@ -247,7 +278,7 @@ class UserScreen(QWidget):
         else:
             self.currentWord += letter_entry
             letter_entry = self.currentWord
-            result = self.in_trie_by_letter(self.trie,letter_entry,self.dictionary)
+            result = self.in_trie_by_letter(letter_entry)
             if "No such words" in result:
                 self.currentWord = self.currentWord[:-1]
                 if "No words with the" not in output_display.text():
@@ -258,13 +289,13 @@ class UserScreen(QWidget):
 
     def finalWord(self,output_display):
         temp = self.currentWord.upper()
-        result = self.in_trie(self.trie,temp,self.dictionary)
+        result = self.in_trie(temp)
         self.currentWord = ''
         output_display.setText(result)
 
-    def in_trie_by_letter(self, trie, currentWord, dictionary):
+    def in_trie_by_letter(self, currentWord):
         temp = currentWord.upper()
-        current_dict = trie
+        current_dict = self.trie
         for letter in temp:
             if letter not in current_dict:
                 return "No such words in dictionary that contain the following letters."
@@ -293,7 +324,7 @@ class AdminScreen(QWidget):
         super().__init__()
         self.stacked_widget = stacked_widget
         self.dictionary = self.dictionaryCreate('english.csv')
-        self.trie = self.make_trie(self.dictionary)
+        self.trie = self.make_trie()
         self.currentWord = ''
         self.initUI()
 
@@ -340,14 +371,9 @@ class AdminScreen(QWidget):
         getFinalWord_button = QPushButton('Get meaning of the word', getLetter_screen)
         reset_button = QPushButton('Reset sequence',getLetter_screen)
         back_button = QPushButton('Back', getLetter_screen)
-        output_display = QLabel(getLetter_screen)
-        output_display.setObjectName("specialLabel")
+        output_display = ScrollLabel(self)
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
-        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        output_display.setMargin(10)
-        output_display.setWordWrap(True)
-        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         # Connect buttons to slots
         getLetter_button.clicked.connect(lambda: self.getLetterWord(letter_entry, output_display))
@@ -377,14 +403,9 @@ class AdminScreen(QWidget):
         meaning_entry = QTextEdit(insert_screen)
         insert_button = QPushButton('Insert', insert_screen)
         back_button = QPushButton('Back', insert_screen)
-        output_display = QLabel(insert_screen)
-        output_display.setObjectName("specialLabel")
+        output_display = ScrollLabel(self)
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
-        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        output_display.setMargin(10)
-        output_display.setWordWrap(True)
-        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
 
         insert_button.clicked.connect(lambda: self.insertWord(word_entry, verb_entry, meaning_entry, output_display))
@@ -410,14 +431,9 @@ class AdminScreen(QWidget):
         word_entry = QLineEdit(get_screen)
         get_button = QPushButton('Get', get_screen)
         back_button = QPushButton('Back', get_screen)
-        output_display = QLabel(get_screen)
-        output_display.setObjectName("specialLabel")
+        output_display = ScrollLabel(self)
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
-        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        output_display.setMargin(10)
-        output_display.setWordWrap(True)
-        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
 
         get_button.clicked.connect(lambda: self.getWord(word_entry, output_display))
@@ -439,14 +455,9 @@ class AdminScreen(QWidget):
         word_entry = QLineEdit(delete_screen)
         delete_button = QPushButton('Delete', delete_screen)
         back_button = QPushButton('Back', delete_screen)
-        output_display = QLabel(delete_screen)
-        output_display.setObjectName("specialLabel")
+        output_display = ScrollLabel(self)
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
-        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        output_display.setMargin(10)
-        output_display.setWordWrap(True)
-        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         delete_button.clicked.connect(lambda: self.deleteWord(word_entry, output_display))
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
@@ -469,14 +480,9 @@ class AdminScreen(QWidget):
         verb_entry = QLineEdit(delete_meaning_screen)
         delete_button = QPushButton('Find Meanings', delete_meaning_screen)
         back_button = QPushButton('Back', delete_meaning_screen)
-        output_display = QLabel(delete_meaning_screen)
-        output_display.setObjectName("specialLabel")
+        output_display = ScrollLabel(self)
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
-        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        output_display.setMargin(10)
-        output_display.setWordWrap(True)
-        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
 
         delete_button.clicked.connect(lambda: self.deleteMeaning(word_entry, verb_entry, meaning_entry , output_display))
@@ -501,11 +507,11 @@ class AdminScreen(QWidget):
         word = word_entry.text().strip().upper()
         verb = verb_entry.text().strip()
         meaning = meaning_entry.text().strip()
-        result = self.delete_trie_meaning(self.trie, word, verb, meaning, self.dictionary)
+        result = self.delete_trie_meaning(word, verb, meaning)
         output_display.setText(result) 
 
-    def delete_trie_meaning(self, trie, word, verb, meaning , dictionary):
-        current_dict = trie
+    def delete_trie_meaning(self, word, verb, meaning ):
+        current_dict = self.trie
         for letter in word:
             if letter not in current_dict:
                 return "No such word in dictionary."
@@ -524,9 +530,9 @@ class AdminScreen(QWidget):
             if len(lst) == 0:
                 return "No such meaning exists."
             else:
-                self.show_delete_meaning_list(trie, word, verb, lst, dictionary)
+                self.show_delete_meaning_list(word, verb, lst)
 
-    def show_delete_meaning_list(self, trie, word, verb, lst, dictionary):
+    def show_delete_meaning_list(self, word, verb, lst):
         delete_meaning_list_screen = QWidget()
         
         back_button = QPushButton('Back', delete_meaning_list_screen)
@@ -536,14 +542,9 @@ class AdminScreen(QWidget):
             list_widget.addItem(meaning)
         list_widget.setWordWrap(True)
 
-        output_display = QLabel(delete_meaning_list_screen)
-        output_display.setObjectName("specialLabel")
+        output_display = ScrollLabel(self)
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
-        output_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        output_display.setMargin(10)
-        output_display.setWordWrap(True)
-        output_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
@@ -565,11 +566,11 @@ class AdminScreen(QWidget):
     def deleteList(self, word, verb, item, output_display, list_widget, row):
         self.removeListItem(list_widget,row)
         meaning = item
-        result = self.delete_meaning_list_(self.trie, word, verb, meaning, self.dictionary)
+        result = self.delete_meaning_list_(word, verb, meaning)
         output_display.setText(result) 
 
-    def delete_meaning_list_(self, trie, word, verb, meaning,  dictionary):
-        current_dict = trie
+    def delete_meaning_list_(self, word, verb, meaning):
+        current_dict = self.trie
         for letter in word:
             if letter not in current_dict:
                 return "No such word in dictionary."
@@ -577,16 +578,16 @@ class AdminScreen(QWidget):
         check = f"{verb},{meaning}"
         if len(current_dict["_end"]) == 1:
             del current_dict["_end"]
-            self.delete_meaning_from_CSV(word,verb,meaning,dictionary,trie)
+            self.delete_meaning_from_CSV(word,verb,meaning)
             return "Meaning and word successfully deleted as there is only one meaning."
         else:
             for i in range(len(current_dict["_end"])):
                 if check == current_dict["_end"][i]:
                     del current_dict["_end"][i]
-                    self.delete_meaning_from_CSV(word,verb,meaning,dictionary,trie)
+                    self.delete_meaning_from_CSV(word,verb,meaning)
                     return "Meaning successfully deleted."
     
-    def delete_meaning_from_CSV(self, word, verb, meaning, dictionary, trie):
+    def delete_meaning_from_CSV(self, word, verb, meaning):
         try:
             meaning = meaning.strip('"')
             with open("english.csv", "r", newline='', encoding='utf-8') as copyf, open("transfer.csv", "w", newline='', encoding='utf-8') as f:
@@ -621,19 +622,19 @@ class AdminScreen(QWidget):
             QMessageBox.critical(self, 'Error', f'Could not find {filename}. Please make sure the file exists.')
         return dictionary
 
-    def make_trie(self, dictionary):
+    def make_trie(self):
         trie = {}
-        for word in dictionary:
+        for word in self.dictionary:
             current_dict = trie
             for letter in word:
                 if letter not in current_dict:
                     current_dict[letter] = {}
                 current_dict = current_dict[letter]
-            current_dict["_end"] = dictionary[word]
+            current_dict["_end"] = self.dictionary[word]
         return trie
 
     def insertWord(self, word_entry, verb_entry, meaning_entry, output_display):
-        word = word_entry.text().strip().upper()
+        word = word_entry.text().strip()
         verb = verb_entry.text().strip()
         meaning = meaning_entry.toPlainText().strip()
         
@@ -641,12 +642,13 @@ class AdminScreen(QWidget):
             output_display.setText('Word and meaning cannot be empty.')
             return
         
-        result = self.insert_trie(self.trie, word, meaning, verb, self.dictionary)
+        result = self.insert_trie(word, meaning, verb)
         output_display.setText(result)
 
-    def insert_trie(self, trie, word, meaning, verb, dictionary):
-        current_dict = trie
-        for letter in word:
+    def insert_trie(self, word, meaning, verb):
+        temp = word.upper()
+        current_dict = self.trie
+        for letter in temp:
             if letter not in current_dict:
                 current_dict[letter] = {}
             current_dict = current_dict[letter]
@@ -673,11 +675,11 @@ class AdminScreen(QWidget):
 
     def getWord(self, word_entry, output_display):
         word = word_entry.text().strip().upper()
-        result = self.in_trie(self.trie, word, self.dictionary)
+        result = self.in_trie(word)
         output_display.setText(result)
 
-    def in_trie(self, trie, word, dictionary):
-        current_dict = trie
+    def in_trie(self, word):
+        current_dict = self.trie
         for letter in word:
             if letter not in current_dict:
                 return "No such word in dictionary."
@@ -691,9 +693,9 @@ class AdminScreen(QWidget):
         else:
             return "No such word in dictionary."
         
-    def in_trie_by_letter(self, trie, currentWord, dictionary):
+    def in_trie_by_letter(self, currentWord):
         temp = currentWord.upper()
-        current_dict = trie
+        current_dict = self.trie
         for letter in temp:
             if letter not in current_dict:
                 return "No such words in dictionary that contain the following letters."
@@ -707,11 +709,11 @@ class AdminScreen(QWidget):
 
     def deleteWord(self, word_entry, output_display):
         word = word_entry.text().strip().upper()
-        result = self.delete_trie_word(self.trie, word, self.dictionary)
+        result = self.delete_trie_word(word)
         output_display.setText(result)
 
-    def delete_trie_word(self, trie, word, dictionary):
-        current_dict = trie
+    def delete_trie_word(self, word):
+        current_dict = self.trie
         for letter in word:
             if letter not in current_dict:
                 return "No such word in dictionary."
@@ -733,6 +735,7 @@ class AdminScreen(QWidget):
                     if row[0].strip().upper() != word:
                         writer.writerow(row)
             os.replace("transfer.csv", "english.csv")
+            print(UserScreen.dictionary)
         except FileNotFoundError:
             QMessageBox.critical(self, 'Error', 'CSV file not found.')
     
@@ -746,7 +749,7 @@ class AdminScreen(QWidget):
                         for i, rows in enumerate(reader):
                             writer.writerow([rows[0],rows[1],rows[2]])
                 self.dictionary = self.dictionaryCreate("english.csv")
-                self.trie = self.make_trie(self.dictionary)
+                self.trie = self.make_trie()
                 QMessageBox.information(self, 'Success', 'Dictionary reset successfully.')
             except FileNotFoundError:
                 QMessageBox.critical(self, 'Error', 'Original CSV file not found.')
@@ -762,7 +765,7 @@ class AdminScreen(QWidget):
         else:
             self.currentWord += letter_entry
             letter_entry = self.currentWord
-            result = self.in_trie_by_letter(self.trie,letter_entry,self.dictionary)
+            result = self.in_trie_by_letter(letter_entry)
             if "No such words" in result:
                 self.currentWord = self.currentWord[:-1]
                 if "No words with the" not in output_display.text():
@@ -777,7 +780,7 @@ class AdminScreen(QWidget):
 
     def finalWord(self,output_display):
         temp = self.currentWord.upper()
-        result = self.in_trie(self.trie,temp,self.dictionary)
+        result = self.in_trie(temp)
         self.currentWord = ''
         output_display.setText(result)
 
