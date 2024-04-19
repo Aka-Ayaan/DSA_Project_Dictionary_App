@@ -735,7 +735,7 @@ class AdminScreen(QWidget):
                     if row[0].strip().upper() != word:
                         writer.writerow(row)
             os.replace("transfer.csv", "english.csv")
-            print(UserScreen.dictionary)
+            # print(UserScreen.dictionary)
         except FileNotFoundError:
             QMessageBox.critical(self, 'Error', 'CSV file not found.')
     
