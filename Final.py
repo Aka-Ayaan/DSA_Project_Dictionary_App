@@ -6,6 +6,199 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
+
+class SharedResources:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(SharedResources, cls).__new__(cls)
+            cls._instance.load_resources()
+        return cls._instance
+
+    def load_resources(self):
+        self.dictionary = self.dictionaryCreate('english.csv')
+        self.trie = self.make_trie()
+    
+    def dictionaryCreate(self, filename):
+        dictionary = {}
+        data = list()
+        with open(filename,"r") as f:
+            csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
+            reader = csv.reader(f)
+            for row in reader:
+                data.append(row)
+        
+        for i in range(1,len(data)):
+            word = data[i].pop(0)
+            word = word.upper()
+            if word in dictionary:
+                dictionary[word].append(','.join(data[i]))
+            else:
+                dictionary[word] = [','.join(data[i])]
+        return dictionary
+
+    def make_trie(self):
+        trie = {}
+        for word in self.dictionary:
+            current_dict = trie
+            for letter in word:
+                if letter not in current_dict:
+                    current_dict[letter] = {}
+                current_dict = current_dict[letter]
+            current_dict["_end"] = self.dictionary[word]
+        return trie
+    
+    def resetDictionary(self):
+        with open("english.csv","w",newline='') as f:
+            writer = csv.writer(f)
+            with open("original.csv","r") as copyf:
+                csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
+                reader = csv.reader(copyf)
+                for i, rows in enumerate(reader):
+                    writer.writerow([rows[0],rows[1],rows[2]])
+        self.load_resources()
+    
+    def insert_trie(self, word, meaning, verb):
+        temp = word.upper()
+        current_dict = self.trie
+        for letter in temp:
+            if letter not in current_dict:
+                current_dict[letter] = {}
+            current_dict = current_dict[letter]
+        toBeAppended = verb + "," + meaning
+        if "_end" in current_dict:
+            if toBeAppended not in current_dict["_end"]:
+                current_dict["_end"].append(toBeAppended)
+                self.writeToCSV(word, verb, meaning)
+                return "Meaning added successfully"
+            else:
+                return "Meaning already in dictionary!"
+        else:
+            current_dict["_end"] = [toBeAppended]
+            self.writeToCSV(word, verb, meaning)
+            return "Word entered successfully"
+
+    def writeToCSV(self, word, verb, meaning):
+        with open("english.csv", "a", newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([word, verb, meaning])
+        self.dictionary = self.dictionaryCreate('english.csv')
+
+
+    def in_trie(self, word):
+        current_dict = self.trie
+        for letter in word:
+            if letter not in current_dict:
+                return "No such word in dictionary."
+            current_dict = current_dict[letter]
+        if "_end" in current_dict:
+            meanings = ''
+            for i in range(len(current_dict["_end"])):
+                meanings += str(i+1) + ") " + current_dict["_end"][i] + "\n"
+            meanings = meanings[:-1]
+            return f"{word}:\n{meanings}"
+        else:
+            return "No such word in dictionary."
+        
+    def in_trie_by_letter(self, currentWord):
+        temp = currentWord.upper()
+        current_dict = self.trie
+        for letter in temp:
+            if letter not in current_dict:
+                return "No such words in dictionary that contain the following letters."
+            current_dict = current_dict[letter]
+        lst = list()
+        for i in current_dict:
+            if i == "_end":
+                continue
+            lst.append(currentWord+i.lower())
+        return lst
+    
+    def delete_trie_word(self, word):
+        current_dict = self.trie
+        for letter in word:
+            if letter not in current_dict:
+                return "No such word in dictionary."
+            current_dict = current_dict[letter]
+        if "_end" not in current_dict:
+            return "No such word in dictionary."
+        else:
+            del current_dict["_end"]
+            self.delete_word_from_CS(word)
+            return "Word removed successfully."
+
+    def delete_word_from_CS(self, word):
+        try:
+            with open("english.csv", "r", newline='', encoding='utf-8') as copyf, open("transfer.csv", "w", newline='', encoding='utf-8') as f:
+                csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
+                reader = csv.reader(copyf)
+                writer = csv.writer(f)
+                for row in reader:
+                    if row[0].strip().upper() != word:
+                        writer.writerow(row)
+            os.replace("transfer.csv", "english.csv")
+            # print(UserScreen.dictionary)
+            self.dictionary = self.dictionaryCreate('english.csv')
+        except FileNotFoundError:
+            QMessageBox.critical(self, 'Error', 'CSV file not found.')
+        
+    def delete_trie_meaning(self, word, verb, meaning ):
+        current_dict = self.trie
+        for letter in word:
+            if letter not in current_dict:
+                return "No such word in dictionary."
+            current_dict = current_dict[letter]
+        if "_end" not in current_dict:
+            return "No such word in dictionary."
+        else:
+            lst = []
+            for i in range(len(current_dict["_end"])):
+                if len(verb) == 0:
+                    if current_dict["_end"][i][0] == "," and meaning in current_dict["_end"][i][1:]:
+                        lst.append(current_dict["_end"][i][1:])
+                else:
+                    if verb == current_dict["_end"][i][:len(verb)] and meaning in current_dict["_end"][i][len(verb):]:
+                        lst.append(current_dict["_end"][i][len(verb)+1:])
+            if len(lst) == 0:
+                return "No such meaning exists."
+            else:
+                return lst
+
+    def delete_meaning_list_(self, word, verb, meaning):
+        current_dict = self.trie
+        for letter in word:
+            if letter not in current_dict:
+                return "No such word in dictionary."
+            current_dict = current_dict[letter]
+        check = f"{verb},{meaning}"
+        if len(current_dict["_end"]) == 1:
+            del current_dict["_end"]
+            self.delete_meaning_from_CSV(word,verb,meaning)
+            return "Meaning and word successfully deleted as there is only one meaning."
+        else:
+            for i in range(len(current_dict["_end"])):
+                if check == current_dict["_end"][i]:
+                    del current_dict["_end"][i]
+                    self.delete_meaning_from_CSV(word,verb,meaning)
+                    return "Meaning successfully deleted."
+    
+    def delete_meaning_from_CSV(self, word, verb, meaning):
+        try:
+            meaning = meaning.strip('"')
+            with open("english.csv", "r", newline='', encoding='utf-8') as copyf, open("transfer.csv", "w", newline='', encoding='utf-8') as f:
+                csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
+                reader = csv.reader(copyf)
+                writer = csv.writer(f)
+                for row in reader:
+                    if word != row[0].strip().upper() or verb != row[1] or meaning != row[2]:
+                        writer.writerow(row)
+            os.replace("transfer.csv", "english.csv")
+            self.dictionary = self.dictionaryCreate('english.csv')
+        except FileNotFoundError:
+            QMessageBox.critical(self, 'Error', 'CSV file not found.')                
+
+
 class ScrollLabel(QScrollArea):
  
     # constructor
@@ -133,8 +326,11 @@ class UserScreen(QWidget):
     def __init__(self, stacked_widget):
         super().__init__()
         self.stacked_widget = stacked_widget
-        self.dictionary = self.dictionaryCreate('english.csv')
-        self.trie = self.make_trie()
+        # self.dictionary = self.dictionaryCreate('english.csv')
+        # self.trie = self.make_trie()
+        self.resources = SharedResources()
+        self.dictionary = self.resources.dictionary
+        self.trie = self.resources.trie
         self.currentWord = ''
         self.initUI()
 
@@ -161,8 +357,8 @@ class UserScreen(QWidget):
 
     def getLetterScreen(self):
         getLetter_screen = QWidget()
-        self.dictionary = self.dictionaryCreate('english.csv')
-        self.trie = self.make_trie()
+        # self.dictionary = self.dictionaryCreate('english.csv')
+        # self.trie = self.make_trie()
         # Create widgets
         letter_entry = QLineEdit(getLetter_screen)
         getLetter_button = QPushButton('Get words with letter', getLetter_screen)
@@ -195,8 +391,8 @@ class UserScreen(QWidget):
         self.stackedWidget.setCurrentWidget(getLetter_screen)    
 
     def showGetScreen(self):
-        self.dictionary = self.dictionaryCreate('english.csv')
-        self.trie = self.make_trie()
+        # self.dictionary = self.dictionaryCreate('english.csv')
+        # self.trie = self.make_trie()
         get_screen = QWidget()
         word_entry = QLineEdit(get_screen)
         get_button = QPushButton('Get', get_screen)
@@ -219,57 +415,25 @@ class UserScreen(QWidget):
         self.stackedWidget.addWidget(get_screen)
         self.stackedWidget.setCurrentWidget(get_screen)
 
-    def dictionaryCreate(self, filename):
-        dictionary = {}
-        try:
-            data = list()
-            with open(filename,"r") as f:
-                csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
-                reader = csv.reader(f)
-                for row in reader:
-                    data.append(row)
-            
-            for i in range(1,len(data)):
-                word = data[i].pop(0)
-                word = word.upper()
-                if word in dictionary:
-                    dictionary[word].append(','.join(data[i]))
-                else:
-                    dictionary[word] = [','.join(data[i])]
-        except FileNotFoundError:
-            QMessageBox.critical(self, 'Error', f'Could not find {filename}. Please make sure the file exists.')
-        return dictionary
-
-    def make_trie(self):
-        trie = {}
-        for word in self.dictionary:
-            current_dict = trie
-            for letter in word:
-                if letter not in current_dict:
-                    current_dict[letter] = {}
-                current_dict = current_dict[letter]
-            current_dict["_end"] = self.dictionary[word]
-        return trie
-
     def getWord(self, word_entry, output_display):
         word = word_entry.text().strip().upper()
-        result = self.in_trie(word)
+        result = self.resources.in_trie(word)
         output_display.setText(result)
 
-    def in_trie(self, word):
-        current_dict = self.trie
-        for letter in word:
-            if letter not in current_dict:
-                return "No such word in dictionary."
-            current_dict = current_dict[letter]
-        if "_end" in current_dict:
-            meanings = ''
-            for i in range(len(current_dict["_end"])):
-                meanings += str(i+1) + ") " + current_dict["_end"][i] + "\n"
-            meanings = meanings[:-1]
-            return f"{word}:\n{meanings}"
-        else:
-            return "No such word in dicitonary."
+    # def in_trie(self, word):
+        # current_dict = self.trie
+        # for letter in word:
+        #     if letter not in current_dict:
+        #         return "No such word in dictionary."
+        #     current_dict = current_dict[letter]
+        # if "_end" in current_dict:
+        #     meanings = ''
+        #     for i in range(len(current_dict["_end"])):
+        #         meanings += str(i+1) + ") " + current_dict["_end"][i] + "\n"
+        #     meanings = meanings[:-1]
+        #     return f"{word}:\n{meanings}"
+        # else:
+        #     return "No such word in dicitonary."
 
     def getLetterWord(self,letter_entry,output_display):
         letter_entry = letter_entry.text().strip()
@@ -278,7 +442,7 @@ class UserScreen(QWidget):
         else:
             self.currentWord += letter_entry
             letter_entry = self.currentWord
-            result = self.in_trie_by_letter(letter_entry)
+            result = self.resources.in_trie_by_letter(letter_entry)
             if "No such words" in result:
                 self.currentWord = self.currentWord[:-1]
                 if "No words with the" not in output_display.text():
@@ -289,23 +453,23 @@ class UserScreen(QWidget):
 
     def finalWord(self,output_display):
         temp = self.currentWord.upper()
-        result = self.in_trie(temp)
+        result = self.resources.in_trie(temp)
         self.currentWord = ''
         output_display.setText(result)
 
-    def in_trie_by_letter(self, currentWord):
-        temp = currentWord.upper()
-        current_dict = self.trie
-        for letter in temp:
-            if letter not in current_dict:
-                return "No such words in dictionary that contain the following letters."
-            current_dict = current_dict[letter]
-        lst = list()
-        for i in current_dict:
-            if i == "_end":
-                continue
-            lst.append(currentWord+i.lower())
-        return lst
+    # def in_trie_by_letter(self, currentWord):
+    #     temp = currentWord.upper()
+    #     current_dict = self.trie
+    #     for letter in temp:
+    #         if letter not in current_dict:
+    #             return "No such words in dictionary that contain the following letters."
+    #         current_dict = current_dict[letter]
+    #     lst = list()
+    #     for i in current_dict:
+    #         if i == "_end":
+    #             continue
+    #         lst.append(currentWord+i.lower())
+    #     return lst
 
     def delete_clicked(self):
         self.stackedWidget.setCurrentIndex(0)
@@ -323,8 +487,11 @@ class AdminScreen(QWidget):
     def __init__(self, stacked_widget):
         super().__init__()
         self.stacked_widget = stacked_widget
-        self.dictionary = self.dictionaryCreate('english.csv')
-        self.trie = self.make_trie()
+        # self.dictionary = self.dictionaryCreate('english.csv')
+        # self.trie = self.make_trie()
+        self.resources = SharedResources()
+        self.dictionary = self.resources.dictionary
+        self.trie = self.resources.trie
         self.currentWord = ''
         self.initUI()
 
@@ -344,7 +511,7 @@ class AdminScreen(QWidget):
         insert_button.clicked.connect(self.showInsertScreen)
         get_button.clicked.connect(self.showGetScreen)
         delete_button.clicked.connect(self.showDeleteScreen)
-        reset_button.clicked.connect(self.resetDictionary)
+        reset_button.clicked.connect(self.resetDict)
         get_letter_button.clicked.connect(self.getLetterScreen)
         delete_meaning_button.clicked.connect(self.ShowDeleteMeaningScreen)
         back_button.clicked.connect(self.goBack)
@@ -361,6 +528,13 @@ class AdminScreen(QWidget):
 
         self.setLayout(QVBoxLayout(self))
         self.layout().addWidget(self.stackedWidget)
+
+    def resetDict(self):
+        self.resources.resetDictionary()
+        self.dictionary = self.resources.dictionary
+        self.trie = self.resources.trie
+        QMessageBox.information(self, 'Success', 'Dictionary resetted')
+
 
     def getLetterScreen(self):
         getLetter_screen = QWidget()
@@ -507,30 +681,12 @@ class AdminScreen(QWidget):
         word = word_entry.text().strip().upper()
         verb = verb_entry.text().strip()
         meaning = meaning_entry.text().strip()
-        result = self.delete_trie_meaning(word, verb, meaning)
-        output_display.setText(result) 
-
-    def delete_trie_meaning(self, word, verb, meaning ):
-        current_dict = self.trie
-        for letter in word:
-            if letter not in current_dict:
-                return "No such word in dictionary."
-            current_dict = current_dict[letter]
-        if "_end" not in current_dict:
-            return "No such word in dictionary."
+        result = self.resources.delete_trie_meaning(word, verb, meaning)
+        if type(result) == list:
+            result = self.show_delete_meaning_list(word,verb,result)
         else:
-            lst = []
-            for i in range(len(current_dict["_end"])):
-                if len(verb) == 0:
-                    if current_dict["_end"][i][0] == "," and meaning in current_dict["_end"][i][1:]:
-                        lst.append(current_dict["_end"][i][1:])
-                else:
-                    if verb == current_dict["_end"][i][:len(verb)] and meaning in current_dict["_end"][i][len(verb):]:
-                        lst.append(current_dict["_end"][i][len(verb)+1:])
-            if len(lst) == 0:
-                return "No such meaning exists."
-            else:
-                self.show_delete_meaning_list(word, verb, lst)
+            output_display.setText(result) 
+
 
     def show_delete_meaning_list(self, word, verb, lst):
         delete_meaning_list_screen = QWidget()
@@ -566,72 +722,8 @@ class AdminScreen(QWidget):
     def deleteList(self, word, verb, item, output_display, list_widget, row):
         self.removeListItem(list_widget,row)
         meaning = item
-        result = self.delete_meaning_list_(word, verb, meaning)
+        result = self.resources.delete_meaning_list_(word, verb, meaning)
         output_display.setText(result) 
-
-    def delete_meaning_list_(self, word, verb, meaning):
-        current_dict = self.trie
-        for letter in word:
-            if letter not in current_dict:
-                return "No such word in dictionary."
-            current_dict = current_dict[letter]
-        check = f"{verb},{meaning}"
-        if len(current_dict["_end"]) == 1:
-            del current_dict["_end"]
-            self.delete_meaning_from_CSV(word,verb,meaning)
-            return "Meaning and word successfully deleted as there is only one meaning."
-        else:
-            for i in range(len(current_dict["_end"])):
-                if check == current_dict["_end"][i]:
-                    del current_dict["_end"][i]
-                    self.delete_meaning_from_CSV(word,verb,meaning)
-                    return "Meaning successfully deleted."
-    
-    def delete_meaning_from_CSV(self, word, verb, meaning):
-        try:
-            meaning = meaning.strip('"')
-            with open("english.csv", "r", newline='', encoding='utf-8') as copyf, open("transfer.csv", "w", newline='', encoding='utf-8') as f:
-                csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
-                reader = csv.reader(copyf)
-                writer = csv.writer(f)
-                for row in reader:
-                    if word != row[0].strip().upper() or verb != row[1] or meaning != row[2]:
-                        writer.writerow(row)
-            os.replace("transfer.csv", "english.csv")
-        except FileNotFoundError:
-            QMessageBox.critical(self, 'Error', 'CSV file not found.')
-
-    def dictionaryCreate(self, filename):
-        dictionary = {}
-        try:
-            data = list()
-            with open(filename,"r") as f:
-                csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
-                reader = csv.reader(f)
-                for row in reader:
-                    data.append(row)
-            
-            for i in range(1,len(data)):
-                word = data[i].pop(0)
-                word = word.upper()
-                if word in dictionary:
-                    dictionary[word].append(','.join(data[i]))
-                else:
-                    dictionary[word] = [','.join(data[i])]
-        except FileNotFoundError:
-            QMessageBox.critical(self, 'Error', f'Could not find {filename}. Please make sure the file exists.')
-        return dictionary
-
-    def make_trie(self):
-        trie = {}
-        for word in self.dictionary:
-            current_dict = trie
-            for letter in word:
-                if letter not in current_dict:
-                    current_dict[letter] = {}
-                current_dict = current_dict[letter]
-            current_dict["_end"] = self.dictionary[word]
-        return trie
 
     def insertWord(self, word_entry, verb_entry, meaning_entry, output_display):
         word = word_entry.text().strip()
@@ -642,117 +734,21 @@ class AdminScreen(QWidget):
             output_display.setText('Word and meaning cannot be empty.')
             return
         
-        result = self.insert_trie(word, meaning, verb)
+        result = self.resources.insert_trie(word, meaning, verb)
+        
         output_display.setText(result)
-
-    def insert_trie(self, word, meaning, verb):
-        temp = word.upper()
-        current_dict = self.trie
-        for letter in temp:
-            if letter not in current_dict:
-                current_dict[letter] = {}
-            current_dict = current_dict[letter]
-        toBeAppended = verb + "," + meaning
-        if "_end" in current_dict:
-            if toBeAppended not in current_dict["_end"]:
-                current_dict["_end"].append(toBeAppended)
-                self.writeToCSV(word, verb, meaning)
-                return "Meaning added successfully"
-            else:
-                return "Meaning already in dictionary!"
-        else:
-            current_dict["_end"] = [toBeAppended]
-            self.writeToCSV(word, verb, meaning)
-            return "Word entered successfully"
-
-    def writeToCSV(self, word, verb, meaning):
-        try:
-            with open("english.csv", "a", newline='', encoding='utf-8') as csvfile:
-                writer = csv.writer(csvfile)
-                writer.writerow([word, verb, meaning])
-        except FileNotFoundError:
-            QMessageBox.critical(self, 'Error', 'CSV file not found.')
 
     def getWord(self, word_entry, output_display):
         word = word_entry.text().strip().upper()
-        result = self.in_trie(word)
+        result = self.resources.in_trie(word)
         output_display.setText(result)
 
-    def in_trie(self, word):
-        current_dict = self.trie
-        for letter in word:
-            if letter not in current_dict:
-                return "No such word in dictionary."
-            current_dict = current_dict[letter]
-        if "_end" in current_dict:
-            meanings = ''
-            for i in range(len(current_dict["_end"])):
-                meanings += str(i+1) + ") " + current_dict["_end"][i] + "\n"
-            meanings = meanings[:-1]
-            return f"{word}:\n{meanings}"
-        else:
-            return "No such word in dictionary."
-        
-    def in_trie_by_letter(self, currentWord):
-        temp = currentWord.upper()
-        current_dict = self.trie
-        for letter in temp:
-            if letter not in current_dict:
-                return "No such words in dictionary that contain the following letters."
-            current_dict = current_dict[letter]
-        lst = list()
-        for i in current_dict:
-            if i == "_end":
-                continue
-            lst.append(currentWord+i.lower())
-        return lst
 
     def deleteWord(self, word_entry, output_display):
         word = word_entry.text().strip().upper()
-        result = self.delete_trie_word(word)
+        result = self.resources.delete_trie_word(word)
         output_display.setText(result)
 
-    def delete_trie_word(self, word):
-        current_dict = self.trie
-        for letter in word:
-            if letter not in current_dict:
-                return "No such word in dictionary."
-            current_dict = current_dict[letter]
-        if "_end" not in current_dict:
-            return "No such word in dictionary."
-        else:
-            del current_dict["_end"]
-            self.delete_word_from_CS(word)
-            return "Word removed successfully."
-
-    def delete_word_from_CS(self, word):
-        try:
-            with open("english.csv", "r", newline='', encoding='utf-8') as copyf, open("transfer.csv", "w", newline='', encoding='utf-8') as f:
-                csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
-                reader = csv.reader(copyf)
-                writer = csv.writer(f)
-                for row in reader:
-                    if row[0].strip().upper() != word:
-                        writer.writerow(row)
-            os.replace("transfer.csv", "english.csv")
-            # print(UserScreen.dictionary)
-        except FileNotFoundError:
-            QMessageBox.critical(self, 'Error', 'CSV file not found.')
-    
-    def resetDictionary(self):
-            try:
-                with open("english.csv","w",newline='') as f:
-                    writer = csv.writer(f)
-                    with open("original.csv","r") as copyf:
-                        csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
-                        reader = csv.reader(copyf)
-                        for i, rows in enumerate(reader):
-                            writer.writerow([rows[0],rows[1],rows[2]])
-                self.dictionary = self.dictionaryCreate("english.csv")
-                self.trie = self.make_trie()
-                QMessageBox.information(self, 'Success', 'Dictionary reset successfully.')
-            except FileNotFoundError:
-                QMessageBox.critical(self, 'Error', 'Original CSV file not found.')
     
     def delete_clicked(self):
         self.stackedWidget.setCurrentIndex(0)
@@ -765,7 +761,7 @@ class AdminScreen(QWidget):
         else:
             self.currentWord += letter_entry
             letter_entry = self.currentWord
-            result = self.in_trie_by_letter(letter_entry)
+            result = self.resources.in_trie_by_letter(letter_entry)
             if "No such words" in result:
                 self.currentWord = self.currentWord[:-1]
                 if "No words with the" not in output_display.text():
@@ -780,7 +776,7 @@ class AdminScreen(QWidget):
 
     def finalWord(self,output_display):
         temp = self.currentWord.upper()
-        result = self.in_trie(temp)
+        result = self.resources.in_trie(temp)
         self.currentWord = ''
         output_display.setText(result)
 
