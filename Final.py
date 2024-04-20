@@ -7,9 +7,10 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 
-class SharedResources:
+class SharedResources: # Singleton class to store all the methods used by the UserScreen and AdminScreen classes
     _instance = None
 
+    # Centralized resources for the application
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(SharedResources, cls).__new__(cls)
@@ -20,6 +21,7 @@ class SharedResources:
         self.dictionary = self.dictionaryCreate('english.csv')
         self.trie = self.make_trie()
     
+    # Create a dictionary from the CSV file
     def dictionaryCreate(self, filename):
         dictionary = {}
         data = list()
@@ -38,6 +40,7 @@ class SharedResources:
                 dictionary[word] = [','.join(data[i])]
         return dictionary
 
+    # Create a trie from the dictionary
     def make_trie(self):
         trie = {}
         for word in self.dictionary:
@@ -49,6 +52,7 @@ class SharedResources:
             current_dict["_end"] = self.dictionary[word]
         return trie
     
+    # Overwrite the dictionary with the original CSV file
     def resetDictionary(self):
         with open("english.csv","w",newline='') as f:
             writer = csv.writer(f)
@@ -59,6 +63,7 @@ class SharedResources:
                     writer.writerow([rows[0],rows[1],rows[2]])
         self.load_resources()
     
+    # Insert a word into the trie and CSV file
     def insert_trie(self, word, meaning, verb):
         temp = word.upper()
         current_dict = self.trie
@@ -79,13 +84,14 @@ class SharedResources:
             self.writeToCSV(word, verb, meaning)
             return "Word entered successfully"
 
+    # Write any changes to the CSV file
     def writeToCSV(self, word, verb, meaning):
         with open("english.csv", "a", newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow([word, verb, meaning])
         self.dictionary = self.dictionaryCreate('english.csv')
 
-
+    # Check if a word is in the trie and gets its meanings
     def in_trie(self, word):
         current_dict = self.trie
         for letter in word:
@@ -100,7 +106,8 @@ class SharedResources:
             return f"{word}:\n{meanings}"
         else:
             return "No such word in dictionary."
-        
+
+    # Prefix search for words in the trie    
     def in_trie_by_letter(self, currentWord):
         temp = currentWord.upper()
         current_dict = self.trie
@@ -115,6 +122,7 @@ class SharedResources:
             lst.append(currentWord+i.lower())
         return lst
     
+    # Delete a word from the trie and CSV file
     def delete_trie_word(self, word):
         current_dict = self.trie
         for letter in word:
@@ -128,6 +136,7 @@ class SharedResources:
             self.delete_word_from_CS(word)
             return "Word removed successfully."
 
+    # Deletion from the CSV file
     def delete_word_from_CS(self, word):
         try:
             with open("english.csv", "r", newline='', encoding='utf-8') as copyf, open("transfer.csv", "w", newline='', encoding='utf-8') as f:
@@ -142,7 +151,8 @@ class SharedResources:
             self.dictionary = self.dictionaryCreate('english.csv')
         except FileNotFoundError:
             QMessageBox.critical(self, 'Error', 'CSV file not found.')
-        
+
+    # Delete a meaning of a word in the trie and CSV file   
     def delete_trie_meaning(self, word, verb, meaning ):
         current_dict = self.trie
         for letter in word:
@@ -165,6 +175,7 @@ class SharedResources:
             else:
                 return lst
 
+    # The list of meanings shown to the user for deletion
     def delete_meaning_list_(self, word, verb, meaning):
         current_dict = self.trie
         for letter in word:
@@ -183,6 +194,7 @@ class SharedResources:
                     self.delete_meaning_from_CSV(word,verb,meaning)
                     return "Meaning successfully deleted."
     
+    # Deletion of the selected meaning from the CSV file
     def delete_meaning_from_CSV(self, word, verb, meaning):
         try:
             meaning = meaning.strip('"')
@@ -198,8 +210,7 @@ class SharedResources:
         except FileNotFoundError:
             QMessageBox.critical(self, 'Error', 'CSV file not found.')                
 
-
-class ScrollLabel(QScrollArea):
+class ScrollLabel(QScrollArea): # A class to create a scrollable label used in the UserScreen and AdminScreen classes
  
     # constructor
     def __init__(self, *args, **kwargs):
@@ -235,42 +246,43 @@ class ScrollLabel(QScrollArea):
         # setting text to the label
         self.label.setText(text)
 
-class LoginScreen(QWidget):
+class LoginScreen(QWidget): # A class to create the login screen
     
+    # Constructor
     def __init__(self, stacked_widget):
         super().__init__()
         self.stacked_widget = stacked_widget
         self.initUI()
 
     def initUI(self):
-        #Creates a stack of widgets so you can store screens and choose which one to display.
+        # Creates a stack of widgets so you can store screens and choose which one to display.
         self.stackedWidget = QStackedWidget()
         
         # Window for login screen
         main_screen = QWidget()
 
-        #Defining buttons and linking them to parent widget
+        # Defining buttons and linking them to parent widget
         user_button = QPushButton('User', main_screen)
         admin_button = QPushButton('Admin', main_screen)
 
-        #Adding functionality for what to do once the button is clicked
+        # Adding functionality for what to do once the button is clicked
         user_button.clicked.connect(self.showUserScreen)
         admin_button.clicked.connect(self.passCheck)
 
-        #Layout helps us define the order of the interface. QHBox means all items on the screen would be horizontally placed.
+        # Layout helps us define the order of the interface. QHBox means all items on the screen would be horizontally placed.
         layout = QHBoxLayout(main_screen)
         label = QLabel('Choose User Type:',main_screen)
         label.adjustSize()
-        #Adds all the widgets
-        # layout.addWidget(QLabel('Choose User Type:'))
+        # Adds all the widgets to the layout
         layout.addWidget(user_button,0)
         layout.addWidget(admin_button,0)
         
-        #Adds the screen onto the stack and sets the current screen
+        # Adds the screen onto the stack and sets the current screen
         self.stackedWidget.addWidget(main_screen)
         self.setLayout(QVBoxLayout(self))
         self.layout().addWidget(self.stackedWidget)
 
+    # Defining the series of the screens in the stacked widget
     def passCheck(self):
         self.stacked_widget.setCurrentIndex(1)
 
@@ -280,8 +292,9 @@ class LoginScreen(QWidget):
     def showAdminScreen(self):
         self.stacked_widget.setCurrentIndex(3)
 
-class passCheck(QWidget):
+class passCheck(QWidget): # A class to create the password check screen if Admin is selected
     
+    # Constructor
     def __init__(self,stacked_widget):
         super().__init__()
         self.stacked_widget = stacked_widget
@@ -310,6 +323,7 @@ class passCheck(QWidget):
         self.setLayout(QVBoxLayout(self))
         self.layout().addWidget(self.stackedWidget)
 
+    # Checking the password entered
     def checkPass(self,passEnter):
         passCheck = passEnter.text().strip()
         if passCheck == "hehe":
@@ -318,16 +332,16 @@ class passCheck(QWidget):
         else:
             QMessageBox.critical(self, 'Error', 'Wrong Password. Try again')
 
+    # Function to go back to the previous screen if the back button is clicked
     def goBack(self):
         self.stacked_widget.setCurrentIndex(0)
 
 class UserScreen(QWidget):
     
+    # Constructor
     def __init__(self, stacked_widget):
         super().__init__()
         self.stacked_widget = stacked_widget
-        # self.dictionary = self.dictionaryCreate('english.csv')
-        # self.trie = self.make_trie()
         self.resources = SharedResources()
         self.dictionary = self.resources.dictionary
         self.trie = self.resources.trie
@@ -335,9 +349,13 @@ class UserScreen(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.stackedWidget = QStackedWidget()
-        # Main Screen
+
+        self.stackedWidget = QStackedWidget() # Creating a stack of widgets 
+        
+        # Main Screen for the User
         main_screen = QWidget()
+
+        # Defining buttons and linking them to parent widget
         get_button = QPushButton('Get Word', main_screen)
         get_letter_button = QPushButton('Get Word Letter-by-letter',main_screen)
         back_button = QPushButton('Back', main_screen)
@@ -346,20 +364,22 @@ class UserScreen(QWidget):
         get_letter_button.clicked.connect(self.getLetterScreen)
         back_button.clicked.connect(self.goBack)
 
+        # Adding the elements to the layout
         main_layout = QVBoxLayout(main_screen)
         main_layout.addWidget(get_button)
         main_layout.addWidget(get_letter_button)
 
+        # Add screen to stacked widget
         self.stackedWidget.addWidget(main_screen)
 
         self.setLayout(QVBoxLayout(self))
         self.layout().addWidget(self.stackedWidget)
 
     def getLetterScreen(self):
-        getLetter_screen = QWidget()
-        # self.dictionary = self.dictionaryCreate('english.csv')
-        # self.trie = self.make_trie()
-        # Create widgets
+        
+        getLetter_screen = QWidget() # Create widget
+    
+        # Initialize elements of the widget
         letter_entry = QLineEdit(getLetter_screen)
         getLetter_button = QPushButton('Get words with letter', getLetter_screen)
         getFinalWord_button = QPushButton('Get meaning of the word', getLetter_screen)
@@ -375,7 +395,7 @@ class UserScreen(QWidget):
         back_button.clicked.connect(lambda: self.delete_clicked())
         reset_button.clicked.connect(lambda: self.reset_clicked(output_display))
 
-        # Create layout
+        # Create layout and add elements to it
         get_letter_layout = QVBoxLayout(getLetter_screen)
         get_letter_layout.addWidget(QLabel('Letter:'))
         get_letter_layout.addWidget(letter_entry)
@@ -391,20 +411,22 @@ class UserScreen(QWidget):
         self.stackedWidget.setCurrentWidget(getLetter_screen)    
 
     def showGetScreen(self):
-        # self.dictionary = self.dictionaryCreate('english.csv')
-        # self.trie = self.make_trie()
-        get_screen = QWidget()
+
+        get_screen = QWidget() # Create widget
+
+        # Initialize elements of the widget
         word_entry = QLineEdit(get_screen)
         get_button = QPushButton('Get', get_screen)
         back_button = QPushButton('Back', get_screen)
-
         output_display = ScrollLabel(self)
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
 
+        # Connect buttons to slots
         get_button.clicked.connect(lambda: self.getWord(word_entry, output_display))
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
 
+        # Create layout and add elements to it
         get_layout = QVBoxLayout(get_screen)
         get_layout.addWidget(QLabel('Word:'))
         get_layout.addWidget(word_entry)
@@ -412,30 +434,17 @@ class UserScreen(QWidget):
         get_layout.addWidget(back_button)
         get_layout.addWidget(QLabel('Output:'))
         get_layout.addWidget(output_display)
+
+        # Add screen to stacked widget
         self.stackedWidget.addWidget(get_screen)
         self.stackedWidget.setCurrentWidget(get_screen)
 
-    def getWord(self, word_entry, output_display):
+    def getWord(self, word_entry, output_display): # Function to link the GUI to the trie functionality
         word = word_entry.text().strip().upper()
         result = self.resources.in_trie(word)
         output_display.setText(result)
 
-    # def in_trie(self, word):
-        # current_dict = self.trie
-        # for letter in word:
-        #     if letter not in current_dict:
-        #         return "No such word in dictionary."
-        #     current_dict = current_dict[letter]
-        # if "_end" in current_dict:
-        #     meanings = ''
-        #     for i in range(len(current_dict["_end"])):
-        #         meanings += str(i+1) + ") " + current_dict["_end"][i] + "\n"
-        #     meanings = meanings[:-1]
-        #     return f"{word}:\n{meanings}"
-        # else:
-        #     return "No such word in dicitonary."
-
-    def getLetterWord(self,letter_entry,output_display):
+    def getLetterWord(self,letter_entry,output_display): # Function to link the GUI to the trie functionality
         letter_entry = letter_entry.text().strip()
         if len(letter_entry) > 1:
             output_display.setText("Invalid input. Enter one letter at a time.")
@@ -451,44 +460,29 @@ class UserScreen(QWidget):
                 result = ", ".join(result)
                 output_display.setText(result)
 
-    def finalWord(self,output_display):
+    def finalWord(self,output_display): # Helper function to get the final word
         temp = self.currentWord.upper()
         result = self.resources.in_trie(temp)
         self.currentWord = ''
         output_display.setText(result)
 
-    # def in_trie_by_letter(self, currentWord):
-    #     temp = currentWord.upper()
-    #     current_dict = self.trie
-    #     for letter in temp:
-    #         if letter not in current_dict:
-    #             return "No such words in dictionary that contain the following letters."
-    #         current_dict = current_dict[letter]
-    #     lst = list()
-    #     for i in current_dict:
-    #         if i == "_end":
-    #             continue
-    #         lst.append(currentWord+i.lower())
-    #     return lst
-
-    def delete_clicked(self):
+    def delete_clicked(self): # Function to delete the meaning selected
         self.stackedWidget.setCurrentIndex(0)
         self.currentWord = ''
 
-    def reset_clicked(self,output_display):
+    def reset_clicked(self,output_display): # Function to reset the sequence
         self.currentWord = ''
         output_display.setText('Sequence resetted!')
 
-    def goBack(self):
+    def goBack(self): # Function to go back to the previous screen
         self.stacked_widget.setCurrentIndex(0)
 
 class AdminScreen(QWidget):
-    
+
+    # Constructor
     def __init__(self, stacked_widget):
         super().__init__()
         self.stacked_widget = stacked_widget
-        # self.dictionary = self.dictionaryCreate('english.csv')
-        # self.trie = self.make_trie()
         self.resources = SharedResources()
         self.dictionary = self.resources.dictionary
         self.trie = self.resources.trie
@@ -496,10 +490,13 @@ class AdminScreen(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.stackedWidget = QStackedWidget()
+        
+        self.stackedWidget = QStackedWidget() # Creating a stack of widgets
 
-        # Main Screen
+        # Main Screen for the Admin
         main_screen = QWidget()
+
+        # Defining buttons and linking them to parent widget
         insert_button = QPushButton('Insert Word', main_screen)
         get_button = QPushButton('Get Word', main_screen)
         delete_button = QPushButton('Delete Word', main_screen)
@@ -508,6 +505,7 @@ class AdminScreen(QWidget):
         delete_meaning_button = QPushButton('Delete Meaning of Word',main_screen)
         back_button = QPushButton('Back',main_screen)
         
+        # Functionality for the buttons when clicked
         insert_button.clicked.connect(self.showInsertScreen)
         get_button.clicked.connect(self.showGetScreen)
         delete_button.clicked.connect(self.showDeleteScreen)
@@ -516,6 +514,7 @@ class AdminScreen(QWidget):
         delete_meaning_button.clicked.connect(self.ShowDeleteMeaningScreen)
         back_button.clicked.connect(self.goBack)
 
+        # Adding the elements to the layout
         main_layout = QVBoxLayout(main_screen)
         main_layout.addWidget(reset_button)
         main_layout.addWidget(insert_button)
@@ -524,8 +523,8 @@ class AdminScreen(QWidget):
         main_layout.addWidget(delete_button)
         main_layout.addWidget(delete_meaning_button)
 
+        # Add screen to stacked widget
         self.stackedWidget.addWidget(main_screen)
-
         self.setLayout(QVBoxLayout(self))
         self.layout().addWidget(self.stackedWidget)
 
@@ -535,11 +534,11 @@ class AdminScreen(QWidget):
         self.trie = self.resources.trie
         QMessageBox.information(self, 'Success', 'Dictionary resetted')
 
-
     def getLetterScreen(self):
-        getLetter_screen = QWidget()
 
-        # Create widgets
+        getLetter_screen = QWidget() # Creating widget
+
+        # Initialize elements of the widget
         letter_entry = QLineEdit(getLetter_screen)
         getLetter_button = QPushButton('Get words with letter', getLetter_screen)
         getFinalWord_button = QPushButton('Get meaning of the word', getLetter_screen)
@@ -555,7 +554,7 @@ class AdminScreen(QWidget):
         back_button.clicked.connect(lambda: self.delete_clicked())
         reset_button.clicked.connect(lambda: self.reset_clicked(output_display))
 
-        # Create layout
+        # Create layout and add elements to it
         get_letter_layout = QVBoxLayout(getLetter_screen)
         get_letter_layout.addWidget(QLabel('Letter:'))
         get_letter_layout.addWidget(letter_entry)
@@ -571,7 +570,10 @@ class AdminScreen(QWidget):
         self.stackedWidget.setCurrentWidget(getLetter_screen)
 
     def showInsertScreen(self):
-        insert_screen = QWidget()
+
+        insert_screen = QWidget() # Creating widget
+        
+        # Initialize elements of the widget
         word_entry = QLineEdit(insert_screen)
         verb_entry = QLineEdit(insert_screen)
         meaning_entry = QTextEdit(insert_screen)
@@ -581,10 +583,11 @@ class AdminScreen(QWidget):
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
 
-
+        # Connect buttons to slots
         insert_button.clicked.connect(lambda: self.insertWord(word_entry, verb_entry, meaning_entry, output_display))
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
 
+        # Create layout and add elements to it
         insert_layout = QVBoxLayout(insert_screen)
         insert_layout.addWidget(QLabel('Word:'))
         insert_layout.addWidget(word_entry)
@@ -597,11 +600,15 @@ class AdminScreen(QWidget):
         insert_layout.addWidget(QLabel('Output:'))
         insert_layout.addWidget(output_display)
 
+        # Add screen to stacked widget
         self.stackedWidget.addWidget(insert_screen)
         self.stackedWidget.setCurrentWidget(insert_screen)
 
     def showGetScreen(self):
-        get_screen = QWidget()
+
+        get_screen = QWidget() # Creating widget
+        
+        # Initialize elements of the widget
         word_entry = QLineEdit(get_screen)
         get_button = QPushButton('Get', get_screen)
         back_button = QPushButton('Back', get_screen)
@@ -609,10 +616,11 @@ class AdminScreen(QWidget):
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
 
-
+        # Connect buttons to slots
         get_button.clicked.connect(lambda: self.getWord(word_entry, output_display))
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
 
+        # Create layout and add elements to it
         get_layout = QVBoxLayout(get_screen)
         get_layout.addWidget(QLabel('Word:'))
         get_layout.addWidget(word_entry)
@@ -621,11 +629,15 @@ class AdminScreen(QWidget):
         get_layout.addWidget(QLabel('Output:'))
         get_layout.addWidget(output_display)
 
+        # Add screen to stacked widget
         self.stackedWidget.addWidget(get_screen)
         self.stackedWidget.setCurrentWidget(get_screen)
 
     def showDeleteScreen(self):
-        delete_screen = QWidget()
+
+        delete_screen = QWidget() # Creating widget
+
+        # Initialize elements of the widget
         word_entry = QLineEdit(delete_screen)
         delete_button = QPushButton('Delete', delete_screen)
         back_button = QPushButton('Back', delete_screen)
@@ -633,9 +645,11 @@ class AdminScreen(QWidget):
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
 
+        # Connect buttons to slots
         delete_button.clicked.connect(lambda: self.deleteWord(word_entry, output_display))
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
 
+        # Create layout and add elements to it
         delete_layout = QVBoxLayout(delete_screen)
         delete_layout.addWidget(QLabel('Word:'))
         delete_layout.addWidget(word_entry)
@@ -644,11 +658,15 @@ class AdminScreen(QWidget):
         delete_layout.addWidget(QLabel('Output:'))
         delete_layout.addWidget(output_display)
 
+        # Add screen to stacked widget
         self.stackedWidget.addWidget(delete_screen)
         self.stackedWidget.setCurrentWidget(delete_screen)
     
     def ShowDeleteMeaningScreen(self):
-        delete_meaning_screen = QWidget()
+
+        delete_meaning_screen = QWidget() # Creating widget
+
+        # Initialize elements of the widget
         word_entry = QLineEdit(delete_meaning_screen)
         meaning_entry = QLineEdit(delete_meaning_screen)
         verb_entry = QLineEdit(delete_meaning_screen)
@@ -658,10 +676,11 @@ class AdminScreen(QWidget):
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
 
-
+        # Connect buttons to slots
         delete_button.clicked.connect(lambda: self.deleteMeaning(word_entry, verb_entry, meaning_entry , output_display))
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
 
+        # Create layout and add elements to it
         delete_layout = QVBoxLayout(delete_meaning_screen)
         delete_layout.addWidget(QLabel('Word:'))
         delete_layout.addWidget(word_entry)
@@ -674,10 +693,11 @@ class AdminScreen(QWidget):
         delete_layout.addWidget(QLabel('Output:'))
         delete_layout.addWidget(output_display)
 
+        # Add screen to stacked widget
         self.stackedWidget.addWidget(delete_meaning_screen)
         self.stackedWidget.setCurrentWidget(delete_meaning_screen)
 
-    def deleteMeaning(self, word_entry, verb_entry, meaning_entry, output_display):
+    def deleteMeaning(self, word_entry, verb_entry, meaning_entry, output_display): # Function to link the GUI to the trie functionality
         word = word_entry.text().strip().upper()
         verb = verb_entry.text().strip()
         meaning = meaning_entry.text().strip()
@@ -688,24 +708,26 @@ class AdminScreen(QWidget):
             output_display.setText(result) 
 
 
-    def show_delete_meaning_list(self, word, verb, lst):
-        delete_meaning_list_screen = QWidget()
+    def show_delete_meaning_list(self, word, verb, lst): # Function to show the list of meanings to the user for deletion
         
+        delete_meaning_list_screen = QWidget() # Creating widget
+
+        # Initialize elements of the widget
         back_button = QPushButton('Back', delete_meaning_list_screen)
         select_meaning = QPushButton('Delete Selected Meaning',delete_meaning_list_screen)
         list_widget = QListWidget(self)
         for meaning in lst:
             list_widget.addItem(meaning)
         list_widget.setWordWrap(True)
-
         output_display = ScrollLabel(self)
         output_display.setFrameStyle(QFrame.Box)
         output_display.setLineWidth(0)
 
-        
+        # Connect buttons to slots
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         select_meaning.clicked.connect(lambda: self.deleteList(word,verb,list_widget.currentItem().text(),output_display, list_widget, list_widget.currentRow()))
 
+        # Create layout and add elements to it
         delete_meaning_layout = QVBoxLayout(delete_meaning_list_screen)
         delete_meaning_layout.addWidget(QLabel('Select a meaning from the list'))
         delete_meaning_layout.addWidget(list_widget)
@@ -713,19 +735,20 @@ class AdminScreen(QWidget):
         delete_meaning_layout.addWidget(select_meaning)
         delete_meaning_layout.addWidget(output_display)
 
+        # Add screen to stacked widget
         self.stackedWidget.addWidget(delete_meaning_list_screen)
         self.stackedWidget.setCurrentWidget(delete_meaning_list_screen)
 
-    def removeListItem(self,list_widget,row):
+    def removeListItem(self,list_widget,row): # Function to remove the selected item from the list
         list_widget.takeItem(row)
 
-    def deleteList(self, word, verb, item, output_display, list_widget, row):
+    def deleteList(self, word, verb, item, output_display, list_widget, row): # Function to link the GUI to the trie functionality
         self.removeListItem(list_widget,row)
         meaning = item
         result = self.resources.delete_meaning_list_(word, verb, meaning)
         output_display.setText(result) 
 
-    def insertWord(self, word_entry, verb_entry, meaning_entry, output_display):
+    def insertWord(self, word_entry, verb_entry, meaning_entry, output_display): # Function to link the GUI to the trie functionality
         word = word_entry.text().strip()
         verb = verb_entry.text().strip()
         meaning = meaning_entry.toPlainText().strip()
@@ -738,23 +761,21 @@ class AdminScreen(QWidget):
         
         output_display.setText(result)
 
-    def getWord(self, word_entry, output_display):
+    def getWord(self, word_entry, output_display): # Function to link the GUI to the trie functionality
         word = word_entry.text().strip().upper()
         result = self.resources.in_trie(word)
         output_display.setText(result)
 
-
-    def deleteWord(self, word_entry, output_display):
+    def deleteWord(self, word_entry, output_display): # Function to link the GUI to the trie functionality
         word = word_entry.text().strip().upper()
         result = self.resources.delete_trie_word(word)
         output_display.setText(result)
 
-    
-    def delete_clicked(self):
+    def delete_clicked(self): # Function to delete the meaning selected
         self.stackedWidget.setCurrentIndex(0)
         self.currentWord = ''
 
-    def getLetterWord(self,letter_entry,output_display):
+    def getLetterWord(self,letter_entry,output_display): # Function to link the GUI to the trie functionality
         letter_entry = letter_entry.text().strip()
         if len(letter_entry) > 1:
             output_display.setText("Invalid input. Enter one letter at a time.")
@@ -770,40 +791,47 @@ class AdminScreen(QWidget):
                 result = ", ".join(result)
                 output_display.setText(result)
     
-    def reset_clicked(self,output_display):
+    def reset_clicked(self,output_display): # Function to reset the sequence
         self.currentWord = ''
         output_display.setText('Sequence resetted')
 
-    def finalWord(self,output_display):
+    def finalWord(self,output_display): # Helper function to get the final word
         temp = self.currentWord.upper()
         result = self.resources.in_trie(temp)
         self.currentWord = ''
         output_display.setText(result)
 
-    def goBack(self):
+    def goBack(self): # Function to go back to the previous screen
         self.stacked_widget.setCurrentIndex(0)
 
-def main():
+def main(): # Main function to run the application
+
+    # Initialize the application
     app = QApplication(sys.argv)
     stacked_widget = QStackedWidget()
 
+    # Set the style of the application
     stacked_widget.setStyleSheet(open('Style.css').read())
 
+    # Create the screens
     login_screen = LoginScreen(stacked_widget)
     pass_check = passCheck(stacked_widget)
     user_screen = UserScreen(stacked_widget)
     admin_screen = AdminScreen(stacked_widget)
 
+    # Add the screens to the stacked widget
     stacked_widget.addWidget(login_screen)
     stacked_widget.addWidget(pass_check)
     stacked_widget.addWidget(user_screen)
     stacked_widget.addWidget(admin_screen)
 
+    # Initialize the stacked widget
     stacked_widget.setWindowTitle('Dictionary Application')
     stacked_widget.setFixedHeight(stacked_widget.sizeHint().height() + 200)
     stacked_widget.setFixedWidth(stacked_widget.sizeHint().width() + 100)
     stacked_widget.show()
 
+    # Run the application
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
