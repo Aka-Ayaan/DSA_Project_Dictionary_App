@@ -19,7 +19,7 @@ class SharedResources: # Singleton class to store all the methods used by the Us
 
     def load_resources(self):
         self.dictionary = self.dictionaryCreate('english.csv')
-        self.trie = self.make_trie()
+        self.trie = self.make_trie(self.dictionary)
     
     # Create a dictionary from the CSV file
     def dictionaryCreate(self, filename):
@@ -41,15 +41,15 @@ class SharedResources: # Singleton class to store all the methods used by the Us
         return dictionary
 
     # Create a trie from the dictionary
-    def make_trie(self):
+    def make_trie(self,dictionary):
         trie = {}
-        for word in self.dictionary:
+        for word in dictionary:
             current_dict = trie
             for letter in word:
                 if letter not in current_dict:
                     current_dict[letter] = {}
                 current_dict = current_dict[letter]
-            current_dict["_end"] = self.dictionary[word]
+            current_dict["_end"] = dictionary[word]
         return trie
     
     # Overwrite the dictionary with the original CSV file
