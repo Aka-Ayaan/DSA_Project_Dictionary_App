@@ -159,7 +159,6 @@ class SharedResources: # Singleton class to store all the methods used by the Us
                     if row[0].strip().upper() != word:
                         writer.writerow(row)
             os.replace("transfer.csv", "english.csv")
-            # print(UserScreen.dictionary)
             self.dictionary = self.dictionaryCreate('english.csv')
         except FileNotFoundError:
             QMessageBox.critical(self, 'Error', 'CSV file not found.')
@@ -180,7 +179,6 @@ class SharedResources: # Singleton class to store all the methods used by the Us
         if "_end" not in current_dict:
             return "No such word in dictionary."
         else:
-            print(current_dict)
             lst = []
             for i in range(len(current_dict["_end"])):
                 if len(verb) == 0:
@@ -208,7 +206,6 @@ class SharedResources: # Singleton class to store all the methods used by the Us
         if len(current_dict["_end"]) == 1:
             if check == current_dict["_end"][0]:
                 del current_dict["_end"]
-                print(word,verb,meaning)
                 self.delete_meaning_from_CSV(word,verb,meaning,dictionary,filename)
                 return "Meaning and word successfully deleted as there is only one meaning."
             else:
@@ -477,13 +474,18 @@ class UserScreen(QWidget):
 
     def getWord(self, word_entry, output_display): # Function to link the GUI to the trie functionality
         word = word_entry.text().strip().upper()
-        result = self.resources.in_trie(word)
-        output_display.setText(result)
+        if word == '':
+            QMessageBox.critical(self, 'Error', 'Enter a word to continue!')
+        else:
+            result = self.resources.in_trie(word)
+            output_display.setText(result)
 
     def getLetterWord(self,letter_entry,output_display): # Function to link the GUI to the trie functionality
         letter_entry = letter_entry.text().strip()
         if len(letter_entry) > 1:
-            output_display.setText("Invalid input. Enter one letter at a time.")
+            QMessageBox.critical(self, 'Error', 'Enter one letter at a time!')
+        elif len(letter_entry) == 0:
+            QMessageBox.critical(self, 'Error', 'Enter a letter to continue!')
         else:
             self.currentWord += letter_entry
             letter_entry = self.currentWord
@@ -523,7 +525,7 @@ class UserScreen(QWidget):
         getNewWord_layout = QVBoxLayout(getNewWord_screen)
         getNewWord_layout.addWidget(QLabel('Word:'))
         getNewWord_layout.addWidget(word_entry)
-        getNewWord_layout.addWidget(QLabel('Verb:'))
+        getNewWord_layout.addWidget(QLabel('Type of speech (verb, noun, adjectives):'))
         getNewWord_layout.addWidget(verb_entry)
         getNewWord_layout.addWidget(QLabel('Meaning:'))
         getNewWord_layout.addWidget(meaning_entry)
@@ -540,25 +542,30 @@ class UserScreen(QWidget):
         word = word_entry.text().strip()
         verb = verb_entry.text().strip()
         meaning = meaning_entry.text().strip()
-        result = self.resources.delete_trie_meaning(word,verb,meaning)      
-        if type(result) == list:
-            for i in result:
-                if i == meaning:
-                    output_display.setText('Word already exists in dictionary!')
-                    return
+        if word == '':
+            QMessageBox.critical(self, 'Error', 'Word field is empty. Kindly enter a word')
+        elif meaning == '':
+            QMessageBox.critical(self,'Error','Meaning field is empty. Kindly enter a word')
         else:
-            forbidden = self.resources.delete_trie_meaning(word,verb,meaning,'reject')
-            if type(forbidden) == list:
-                for i in forbidden:
+            result = self.resources.delete_trie_meaning(word,verb,meaning)      
+            if type(result) == list:
+                for i in result:
                     if i == meaning:
-                        output_display.setText('The following word has already been rejected and can\'t be added into the dictionary.')
+                        output_display.setText('Word already exists in dictionary!')
                         return
             else:
-                output = self.resources.insert_trie(word,meaning,verb,"suggest",'suggest.csv','suggest')
-                if output == "Meaning already in dictionary!":
-                    output_display.setText('This word is already under review!')
+                forbidden = self.resources.delete_trie_meaning(word,verb,meaning,'reject')
+                if type(forbidden) == list:
+                    for i in forbidden:
+                        if i == meaning:
+                            output_display.setText('The following word has already been rejected and can\'t be added into the dictionary.')
+                            return
                 else:
-                    output_display.setText('Suggestion received! Thanks for contributing. We will review your input and insert it into the dictionary if applicable!')
+                    output = self.resources.insert_trie(word,meaning,verb,"suggest",'suggest.csv','suggest')
+                    if output == "Meaning already in dictionary!":
+                        output_display.setText('This word is already under review!')
+                    else:
+                        output_display.setText('Suggestion received! Thanks for contributing. We will review your input and insert it into the dictionary if applicable!')
 
 
     def delete_clicked(self): # Function to delete the meaning selected
@@ -693,7 +700,7 @@ class AdminScreen(QWidget):
         insert_layout = QVBoxLayout(insert_screen)
         insert_layout.addWidget(QLabel('Word:'))
         insert_layout.addWidget(word_entry)
-        insert_layout.addWidget(QLabel('Verb:'))
+        insert_layout.addWidget(QLabel('Type of speech (verb, noun, adjectives):'))
         insert_layout.addWidget(verb_entry)
         insert_layout.addWidget(QLabel('Meaning:'))
         insert_layout.addWidget(meaning_entry)
@@ -786,9 +793,9 @@ class AdminScreen(QWidget):
         delete_layout = QVBoxLayout(delete_meaning_screen)
         delete_layout.addWidget(QLabel('Word:'))
         delete_layout.addWidget(word_entry)
-        delete_layout.addWidget(QLabel('Verb:'))
+        delete_layout.addWidget(QLabel('Type of speech (verb, noun, adjectives):'))
         delete_layout.addWidget(verb_entry)
-        delete_layout.addWidget(QLabel('Meaning:'))
+        delete_layout.addWidget(QLabel('Enter a meaning o part of a meaning:'))
         delete_layout.addWidget(meaning_entry)
         delete_layout.addWidget(delete_button)
         delete_layout.addWidget(back_button)
@@ -803,11 +810,14 @@ class AdminScreen(QWidget):
         word = word_entry.text().strip().upper()
         verb = verb_entry.text().strip()
         meaning = meaning_entry.text().strip()
-        result = self.resources.delete_trie_meaning(word, verb, meaning)
-        if type(result) == list:
-            result = self.show_delete_meaning_list(word,verb,result)
+        if word == '':
+            QMessageBox.critical(self, 'Error', 'Enter a word to continue!')
         else:
-            output_display.setText(result) 
+            result = self.resources.delete_trie_meaning(word, verb, meaning)
+            if type(result) == list:
+                result = self.show_delete_meaning_list(word,verb,result)
+            else:
+                output_display.setText(result) 
 
 
     def show_delete_meaning_list(self, word, verb, lst): # Function to show the list of meanings to the user for deletion
@@ -827,7 +837,7 @@ class AdminScreen(QWidget):
 
         # Connect buttons to slots
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
-        select_meaning.clicked.connect(lambda: self.deleteList(word,verb,list_widget.currentItem().text(),output_display, list_widget, list_widget.currentRow()))
+        select_meaning.clicked.connect(lambda: self.deleteList(word,verb,list_widget.currentItem(),output_display, list_widget, list_widget.currentRow()))
 
         # Create layout and add elements to it
         delete_meaning_layout = QVBoxLayout(delete_meaning_list_screen)
@@ -845,33 +855,43 @@ class AdminScreen(QWidget):
         list_widget.takeItem(row)
 
     def deleteList(self, word, verb, item, output_display, list_widget, row): # Function to link the GUI to the trie functionality
-        self.removeListItem(list_widget,row)
-        meaning = item
-        result = self.resources.delete_meaning_list_(word, verb, meaning)
-        output_display.setText(result) 
+        if item == None:
+            QMessageBox.critical(self, 'Error', 'Select a meaning to continue!')
+        else:
+            text = item.text()
+            self.removeListItem(list_widget,row)
+            meaning = text
+            result = self.resources.delete_meaning_list_(word, verb, meaning)
+            output_display.setText(result) 
 
     def insertWord(self, word_entry, verb_entry, meaning_entry, output_display): # Function to link the GUI to the trie functionality
         word = word_entry.text().strip()
         verb = verb_entry.text().strip()
         meaning = meaning_entry.toPlainText().strip()
-        
-        if word == '' or meaning == '':
-            output_display.setText('Word and meaning cannot be empty.')
-            return
-        
-        result = self.resources.insert_trie(word, meaning, verb,'main','english.csv','main')
-        
-        output_display.setText(result)
+        if word == '':
+            QMessageBox.critical(self, 'Error', 'No word input!')
+        elif meaning == '':
+            QMessageBox.critical(self, 'Error', 'No meaning input!')
+        else:
+            result = self.resources.insert_trie(word, meaning, verb,'main','english.csv','main')
+            
+            output_display.setText(result)
 
     def getWord(self, word_entry, output_display): # Function to link the GUI to the trie functionality
         word = word_entry.text().strip().upper()
-        result = self.resources.in_trie(word)
-        output_display.setText(result)
+        if word == '':
+            QMessageBox.critical(self, 'Error', 'Enter a word to continue!')
+        else:
+            result = self.resources.in_trie(word)
+            output_display.setText(result)
 
     def deleteWord(self, word_entry, output_display): # Function to link the GUI to the trie functionality
         word = word_entry.text().strip().upper()
-        result = self.resources.delete_trie_word(word)
-        output_display.setText(result)
+        if word == '':
+            QMessageBox.critical(self, 'Error', 'Enter a word to continue!')
+        else:
+            result = self.resources.delete_trie_word(word)
+            output_display.setText(result)
 
     def delete_clicked(self): # Function to delete the meaning selected
         self.stackedWidget.setCurrentIndex(0)
@@ -880,7 +900,9 @@ class AdminScreen(QWidget):
     def getLetterWord(self,letter_entry,output_display): # Function to link the GUI to the trie functionality
         letter_entry = letter_entry.text().strip()
         if len(letter_entry) > 1:
-            output_display.setText("Invalid input. Enter one letter at a time.")
+            QMessageBox.critical(self, 'Error', 'Can\'t enter more than one letter at a time!')
+        elif len(letter_entry) == 0:
+            QMessageBox.critical(self, 'Error', 'Enter a letter to continue!')
         else:
             self.currentWord += letter_entry
             letter_entry = self.currentWord
@@ -915,21 +937,19 @@ class AdminScreen(QWidget):
         output_display.setLineWidth(0)
         Suggestion = QListWidget(self)
         self.suggestingDictionary = self.resources.suggestingDictionary
-        print(self.suggestingDictionary)
         for i in self.suggestingDictionary:
             for j in range(len(self.suggestingDictionary[i])):
                 temp = self.suggestingDictionary[i][j].split(',')
                 verb = temp[0]
                 meaning = " ".join(temp[1:])
-                toAppend = "Word: " + i + "\n" + "Verb: " + verb + "\n" + "Meaning: " + meaning
+                toAppend = "Word: " + i + "\n" + "Type of speech: " + verb + "\n" + "Meaning: " + meaning
                 Suggestion.addItem(toAppend)
                 break
         Suggestion.setWordWrap(True)
-
         #Connect button to slots
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
-        addSuggestion_button.clicked.connect(lambda: self.AddSuggestion(Suggestion.currentItem().text(),output_display,Suggestion,Suggestion.currentRow()))
-        rejectSuggestion_button.clicked.connect(lambda: self.RejectSuggestion(Suggestion.currentItem().text(),Suggestion,Suggestion.currentRow(),output_display))
+        addSuggestion_button.clicked.connect(lambda: self.AddSuggestion(Suggestion.currentItem(),output_display,Suggestion,Suggestion.currentRow()))
+        rejectSuggestion_button.clicked.connect(lambda: self.RejectSuggestion(Suggestion.currentItem(),Suggestion,Suggestion.currentRow(),output_display))
         #Creat layout and add elements to it
         showSuggestion_layout = QVBoxLayout(showSuggestion_screen)
         showSuggestion_layout.addWidget(QLabel('List of suggestions:'))
@@ -944,31 +964,38 @@ class AdminScreen(QWidget):
         self.stackedWidget.setCurrentWidget(showSuggestion_screen)
 
     def RejectSuggestion(self,item,Suggestion,row,output_display):
-        self.removeListItem(Suggestion,row)
-
-        temp = item.split('\n')
-        for i in range(len(temp)):
-            temp[i] = temp[i].split(' ')
-        word = " ".join(temp[0][1:])
-        verb = " ".join(temp[1][1:])
-        meaning = " ".join(temp[2][1:])
-        self.resources.delete_meaning_list_(word,verb,meaning,"suggest","suggest.csv","suggest")
-        self.resources.insert_trie(word,meaning,verb,"reject","rejectedWords.csv","reject")
-        output_display.setText("Word successfully disapproved")
+        if item == None:
+            output_display.setText('No word selected to be disapproved.')
+        else:
+            text = item.text()
+            self.removeListItem(Suggestion,row)
+            temp = text.split('\n')
+            for i in range(len(temp)):
+                temp[i] = temp[i].split(' ')
+            word = " ".join(temp[0][1:])
+            verb = " ".join(temp[1][3:])
+            meaning = " ".join(temp[2][1:])
+            self.resources.delete_meaning_list_(word,verb,meaning,"suggest","suggest.csv","suggest")
+            self.resources.insert_trie(word,meaning,verb,"reject","rejectedWords.csv","reject")
+            output_display.setText("Word successfully disapproved")
 
 
     def AddSuggestion(self, item, output_display, Suggestion, row):
-        self.removeListItem(Suggestion,row)
-        temp = item.split('\n')
-        for i in range(len(temp)):
-            temp[i] = temp[i].split(' ')
-        word = " ".join(temp[0][1:])
-        verb = " ".join(temp[1][1:])
-        meaning = " ".join(temp[2][1:])
-        self.resources.delete_meaning_list_(word,verb,meaning,"suggest","suggest.csv","suggest")
-        # self.resources.insert_trie()
-        result = self.resources.insert_trie(word,meaning,verb,'main','english.csv','main')
-        output_display.setText(result)
+        if item == None:
+            output_display.setText('No word selected to be added to dictionary')
+        else:
+            self.removeListItem(Suggestion,row)
+            text = item.text()
+            temp = text.split('\n')
+            for i in range(len(temp)):
+                temp[i] = temp[i].split(' ')
+            word = " ".join(temp[0][1:])
+            verb = " ".join(temp[1][3:])
+            meaning = " ".join(temp[2][1:])
+            self.resources.delete_meaning_list_(word,verb,meaning,"suggest","suggest.csv","suggest")
+            # self.resources.insert_trie()
+            result = self.resources.insert_trie(word,meaning,verb,'main','english.csv','main')
+            output_display.setText(result)
 
     def goBack(self): # Function to go back to the previous screen
         self.stacked_widget.setCurrentIndex(0)
