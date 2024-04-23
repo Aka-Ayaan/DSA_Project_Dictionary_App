@@ -4,6 +4,7 @@ QWidget {
 
 }
 QPushButton {
+    border-radius: 10px;
     background-color: #555;
     color: #fff;
     border: none;
@@ -11,14 +12,19 @@ QPushButton {
     min-width: 50px;
     min-height: 10px;
     margin: 10px 0;
-    }
-    QPushButton:hover {
-    background-color: #777;
 }
+
+QPushButton:hover {
+    background-color: pink;
+    color: black;
+}
+
 QLabel{
     color: white;
 }
+
 #specialLabel {
+    font-size: 1vw;
     background-color: white;
     color: black;
 }
