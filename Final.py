@@ -123,8 +123,8 @@ class SharedResources: # Singleton class to store all the methods used by the Us
             return "No such word in dictionary."
 
     # Prefix search for words in the trie    
-    def in_trie_by_letter(self, currentWord):
-        temp = currentWord.upper()
+    def in_trie_by_letter(self):
+        temp = self.currentWord.upper()
         current_dict = self.trie
         for letter in temp:
             if letter not in current_dict:
@@ -134,7 +134,7 @@ class SharedResources: # Singleton class to store all the methods used by the Us
         for i in current_dict:
             if i == "_end":
                 continue
-            lst.append(currentWord+i.lower())
+            lst.append(self.currentWord+i.lower())
         return lst
     
     # Delete a word from the trie and CSV file
@@ -153,18 +153,15 @@ class SharedResources: # Singleton class to store all the methods used by the Us
 
     # Deletion from the CSV file
     def delete_word_from_CSV(self, word):
-        try:
-            with open("english.csv", "r", newline='', encoding='utf-8') as copyf, open("transfer.csv", "w", newline='', encoding='utf-8') as f:
-                csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
-                reader = csv.reader(copyf)
-                writer = csv.writer(f)
-                for row in reader:
-                    if row[0].strip().upper() != word:
-                        writer.writerow(row)
-            os.replace("transfer.csv", "english.csv")
-            self.dictionary = self.dictionaryCreate('english.csv')
-        except FileNotFoundError:
-            QMessageBox.critical(self, 'Error', 'CSV file not found.')
+        with open("english.csv", "r", newline='', encoding='utf-8') as copyf, open("transfer.csv", "w", newline='', encoding='utf-8') as f:
+            csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
+            reader = csv.reader(copyf)
+            writer = csv.writer(f)
+            for row in reader:
+                if row[0].strip().upper() != word:
+                    writer.writerow(row)
+        os.replace("transfer.csv", "english.csv")
+        self.dictionary = self.dictionaryCreate('english.csv')
 
     # Delete a meaning of a word in the trie and CSV file   
     def returnList_delete_meaning(self, word, verb, meaning,trieStr='main'):
@@ -222,22 +219,19 @@ class SharedResources: # Singleton class to store all the methods used by the Us
     
     # Deletion of the selected meaning from the CSV file
     def delete_meaning_from_CSV(self, word, verb, meaning,dictionaryStr='main',filename='english.csv'):
-        try:
-            meaning = meaning.strip('"')
-            with open(filename, "r", newline='', encoding='utf-8') as copyf, open("transfer.csv", "w", newline='', encoding='utf-8') as f:
-                csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
-                reader = csv.reader(copyf)
-                writer = csv.writer(f)
-                for row in reader:
-                    if word != row[0].strip().upper() or verb != row[1] or meaning != row[2]:
-                        writer.writerow(row)
-            os.replace("transfer.csv", filename)
-            if dictionaryStr == "main":
-                self.dictionary = self.dictionaryCreate(filename)
-            elif dictionaryStr == "suggest":
-                self.suggestingDictionary = self.dictionaryCreate(filename)
-        except FileNotFoundError:
-            QMessageBox.critical(self, 'Error', 'CSV file not found.')                
+        meaning = meaning.strip('"')
+        with open(filename, "r", newline='', encoding='utf-8') as copyf, open("transfer.csv", "w", newline='', encoding='utf-8') as f:
+            csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
+            reader = csv.reader(copyf)
+            writer = csv.writer(f)
+            for row in reader:
+                if word != row[0].strip().upper() or verb != row[1] or meaning != row[2]:
+                    writer.writerow(row)
+        os.replace("transfer.csv", filename)
+        if dictionaryStr == "main":
+            self.dictionary = self.dictionaryCreate(filename)
+        elif dictionaryStr == "suggest":
+            self.suggestingDictionary = self.dictionaryCreate(filename)               
 
     def itemsOfList(self):
         lst = list()
@@ -484,8 +478,7 @@ class UserScreen(QWidget):
             QMessageBox.critical(self, 'Error', 'Enter a letter to continue!')
         else:
             self.resources.currentWord += letter_entry
-            letter_entry = self.resources.currentWord
-            result = self.resources.in_trie_by_letter(letter_entry)
+            result = self.resources.in_trie_by_letter()
             if "No such words" in result:
                 self.resources.currentWord = self.resources.currentWord[:-1]
                 QMessageBox.critical(self, 'Error', 'No words for the following letter. Kindly pick a letter from the combinations given')
@@ -855,7 +848,6 @@ class AdminScreen(QWidget):
             QMessageBox.critical(self, 'Error', 'No meaning input!')
         else:
             result = self.resources.insert_trie(word, meaning, verb)
-            
             output_display.setText(result)
 
     def getWord(self, word_entry, output_display): # Function to link the GUI to the trie functionality
@@ -882,12 +874,10 @@ class AdminScreen(QWidget):
             QMessageBox.critical(self, 'Error', 'Enter a letter to continue!')
         else:
             self.resources.currentWord += letter_entry
-            letter_entry = self.resources.currentWord
-            result = self.resources.in_trie_by_letter(letter_entry)
+            result = self.resources.in_trie_by_letter()
             if "No such words" in result:
                 self.resources.currentWord = self.resources.currentWord[:-1]
-                if "No words with the" not in output_display.text():
-                    output_display.setText('No words with the inputted letter. Kindly pick a letter from one of the following combinations\n' + output_display.text())
+                QMessageBox.critical(self, 'Error', 'No words for the following letter. Kindly pick a letter from the combinations given')
             else:
                 result = ", ".join(result)
                 output_display.setText(result)
@@ -1005,3 +995,6 @@ def main(): # Main function to run the application
 
 if __name__ == '__main__':
     main()
+
+#For the sake of 1000 thousand lines
+#Yus
