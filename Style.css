@@ -24,7 +24,7 @@ QLabel{
 }
 
 #specialLabel {
-    font-size: 1vw;
+    font-size: 15px;
     background-color: white;
     color: black;
 }

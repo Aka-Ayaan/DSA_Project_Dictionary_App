@@ -103,7 +103,6 @@ class SharedResources: # Singleton class to store all the methods used by the Us
             self.dictionary = self.dictionaryCreate(filename)
         elif dictionaryStr == "suggest":
             self.suggestingDictionary = self.dictionaryCreate(filename)
-            print(self.suggestingDictionary)
         elif dictionaryStr == "reject":
             self.rejectedDictionary = self.dictionaryCreate(filename)
 
