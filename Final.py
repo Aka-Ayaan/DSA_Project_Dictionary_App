@@ -469,13 +469,14 @@ class UserScreen(QWidget):
             output_display.setText(result)
 
     def getLetterWord(self,letter_entry,output_display): # Function to link the GUI to the trie functionality
-        letter_entry = letter_entry.text().strip()
-        if len(letter_entry) > 1:
+        letter_text = letter_entry.text().strip()
+        letter_entry.clear()
+        if len(letter_text) > 1:
             QMessageBox.critical(self, 'Error', 'Enter one letter at a time!')
-        elif len(letter_entry) == 0:
+        elif len(letter_text) == 0:
             QMessageBox.critical(self, 'Error', 'Enter a letter to continue!')
         else:
-            self.resources.currentWord += letter_entry
+            self.resources.currentWord += letter_text
             result = self.resources.in_trie_by_letter()
             if "No such words" in result:
                 self.resources.currentWord = self.resources.currentWord[:-1]
@@ -865,13 +866,14 @@ class AdminScreen(QWidget):
             output_display.setText(result)
 
     def getLetterWord(self,letter_entry,output_display): # Function to link the GUI to the trie functionality
-        letter_entry = letter_entry.text().strip()
-        if len(letter_entry) > 1:
+        letter_text = letter_entry.text().strip()
+        letter_entry.clear()
+        if len(letter_text) > 1:
             QMessageBox.critical(self, 'Error', 'Can\'t enter more than one letter at a time!')
-        elif len(letter_entry) == 0:
+        elif len(letter_text) == 0:
             QMessageBox.critical(self, 'Error', 'Enter a letter to continue!')
         else:
-            self.resources.currentWord += letter_entry
+            self.resources.currentWord += letter_text
             result = self.resources.in_trie_by_letter()
             if "No such words" in result:
                 self.resources.currentWord = self.resources.currentWord[:-1]
@@ -963,6 +965,8 @@ class AdminScreen(QWidget):
 
 def main(): # Main function to run the application
 
+    dictionary = SharedResources.dictionaryCreate(SharedResources,'english.csv')
+    trie = SharedResources.make_trie(SharedResources,dictionary)
     # Initialize the application
     app = QApplication(sys.argv)
     stacked_widget = QStackedWidget()
