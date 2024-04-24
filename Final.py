@@ -7,6 +7,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 
+
 class SharedResources: # Singleton class to store all the methods used by the UserScreen and AdminScreen classes
     _instance = None
 
@@ -208,8 +209,6 @@ class SharedResources: # Singleton class to store all the methods used by the Us
                 del current_dict["_end"]
                 self.delete_meaning_from_CSV(word,verb,meaning,dictionaryStr,filename)
                 return "Meaning and word successfully deleted as there is only one meaning."
-            else:
-                return "No such word in dictionary"
         else:
             for i in range(len(current_dict["_end"])):
                 if check == current_dict["_end"][i]:
@@ -769,7 +768,7 @@ class AdminScreen(QWidget):
         delete_layout.addWidget(word_entry)
         delete_layout.addWidget(QLabel('Type of speech (verb, noun, adjectives):'))
         delete_layout.addWidget(verb_entry)
-        delete_layout.addWidget(QLabel('Enter a meaning o part of a meaning:'))
+        delete_layout.addWidget(QLabel('Enter a meaning or part of a meaning:'))
         delete_layout.addWidget(meaning_entry)
         delete_layout.addWidget(delete_button)
         delete_layout.addWidget(back_button)
@@ -985,6 +984,7 @@ def main(): # Main function to run the application
     stacked_widget.addWidget(admin_screen)
 
     # Initialize the stacked widget
+    stacked_widget.setWindowIcon(QIcon('just_a_girl.png'))
     stacked_widget.setWindowTitle('Dictionary Application')
     stacked_widget.setMinimumHeight(stacked_widget.sizeHint().height() + 200)
     stacked_widget.setMinimumWidth(stacked_widget.sizeHint().width() + 100)
