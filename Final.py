@@ -809,7 +809,7 @@ class AdminScreen(QWidget):
         output_display.setLineWidth(0)
 
         # Connect buttons to slots
-        back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
+        back_button.clicked.connect(lambda: self.ShowDeleteMeaningScreen())
         select_meaning.clicked.connect(lambda: self.deleteList(word,verb,list_widget.currentItem(),output_display, list_widget, list_widget.currentRow()))
 
         # Create layout and add elements to it
@@ -818,6 +818,7 @@ class AdminScreen(QWidget):
         delete_meaning_layout.addWidget(list_widget)
         delete_meaning_layout.addWidget(back_button)
         delete_meaning_layout.addWidget(select_meaning)
+        delete_meaning_layout.addWidget(QLabel('Output:'))
         delete_meaning_layout.addWidget(output_display)
 
         # Add screen to stacked widget
@@ -918,6 +919,7 @@ class AdminScreen(QWidget):
         showSuggestion_layout.addWidget(back_button)
         showSuggestion_layout.addWidget(addSuggestion_button)
         showSuggestion_layout.addWidget(rejectSuggestion_button)
+        showSuggestion_layout.addWidget(QLabel('Output:'))
         showSuggestion_layout.addWidget(output_display)
 
         #Add screen to stacked widget
