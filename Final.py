@@ -313,7 +313,6 @@ class LoginScreen(QWidget): # A class to create the login screen
         self.setLayout(QVBoxLayout(self))
         self.layout().addWidget(self.stackedWidget)
 
-
 class passCheck(QWidget): # A class to create the password check screen if Admin is selected
     
     # Constructor
