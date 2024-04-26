@@ -7,7 +7,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 
-
 class SharedResources: # Singleton class to store all the methods used by the UserScreen and AdminScreen classes
     _instance = None
 
@@ -908,11 +907,13 @@ class AdminScreen(QWidget):
         for i in itemList:
             Suggestion.addItem(i)
         Suggestion.setWordWrap(True)
+        
         #Connect button to slots
         back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         addSuggestion_button.clicked.connect(lambda: self.AddSuggestion(Suggestion.currentItem(),output_display,Suggestion,Suggestion.currentRow()))
         rejectSuggestion_button.clicked.connect(lambda: self.RejectSuggestion(Suggestion.currentItem(),Suggestion,Suggestion.currentRow(),output_display))
-        #Creat layout and add elements to it
+        
+        #Create layout and add elements to it
         showSuggestion_layout = QVBoxLayout(showSuggestion_screen)
         showSuggestion_layout.addWidget(QLabel('List of suggestions:'))
         showSuggestion_layout.addWidget(Suggestion)
@@ -956,7 +957,6 @@ class AdminScreen(QWidget):
             verb = " ".join(temp[1][3:])
             meaning = " ".join(temp[2][1:])
             self.resources.delete_meaning_list(word,verb,meaning,"suggest","suggest.csv","suggest")
-            # self.resources.insert_trie()
             result = self.resources.insert_trie(word,meaning,verb)
             output_display.setText(result)
 
@@ -1000,6 +1000,3 @@ def main(): # Main function to run the application
 
 if __name__ == '__main__':
     main()
-
-#For the sake of 1000 thousand lines
-#Yayyy!!!
