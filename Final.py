@@ -151,6 +151,7 @@ class SharedResources: # Singleton class to store all the methods used by the Us
             return "Word removed successfully."
 
     # Deletion from the CSV file
+    # transfer.csv is temporarily created to store the changes
     def delete_word_from_CSV(self, word):
         with open("english.csv", "r", newline='', encoding='utf-8') as copyf, open("transfer.csv", "w", newline='', encoding='utf-8') as f:
             csv.field_size_limit(int(ct.c_ulong(-1).value // 2))
